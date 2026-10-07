@@ -28,12 +28,12 @@ Mark `[x]` when done. Each task is one commit.
 - [x] B.3 Set `Time.fixedDeltaTime = 0.004`, gravity (0,-9.81,0) in Physics Manager, MjGlobalSettings solver options to contract values. The plugin does not parse `ls_iterations` / `eulerdamp`: set them on `mjModel.opt` from C# after scene creation. Runtime readback asserts opt.*, nq/nv/nu, body masses, actuator gainprm/biasprm, geom friction against `docs/model_summary.json` (Unity regenerates MJCF from components).
 - [x] B.4 `Go2Controller.cs`: subscribe to `MjScene.ctrlCallback`, step counter mod 5, build obs (48 / 42) from `mjData.sensordata`, `qpos`, `qvel`; write 12 ctrl values. Starts in "hold home pose" mode (no network).
 - [x] B.5 Zero-brain gate: 2 s passive hold at home ctrl in Unity and in Python (`training/zero_brain.py`). PASSED: worst |dqpos| 4.75e-8 over 101 frames. Runs via headless player `Build/Testbed/PoRace.exe -batchmode -nographics -parityDir <dir>` (editor play loop does not tick while the editor is unfocused). `training/compare_models.py` diffs the Unity-regenerated model field by field.
-- [ ] B.6 `CubePool.cs`: holds the 4 cube MjBody/MjFreeJoint refs; `Fire(pos, vel)` writes qpos/qvel of the next free cube via C# bindings; `Park()` returns it to z=-10 with zero velocity. No Instantiate/Destroy.
-- [ ] B.7 `Shove.cs`: impulse via `mjData.xfrc_applied` on the base body for N physics steps.
-- [ ] B.8 Testbed scene: 9:16 portrait Game view, follow camera, ground plane, uGUI HUD (TL title / TC fps+tick / TR behaviour dropdown / BL reset+shove / BR version).
-- [ ] B.9 Dummy ONNX: `training/export_onnx.py` emits `zero_policy.onnx` (48 -> 12 zeros). Load with Inference Engine, run every 5th step, verify ctrl == default pose and the dog stands as in B.5.
-- [ ] B.10 `PolicyRunner.cs`: loads an ONNX, float[] obs -> float[12]. `ReplayTest.cs` reads `reference_trajectory.json` and asserts max abs action diff < 1e-4. Run against the zero policy to prove the harness itself.
-- [ ] B.11 Commit tag `phase-b-parity-scaffold`.
+- [x] B.6 (code in place, exercised in C.13) `CubePool.cs`: holds the 4 cube MjBody/MjFreeJoint refs; `Fire(pos, vel)` writes qpos/qvel of the next free cube via C# bindings; `Park()` returns it to z=-10 with zero velocity. No Instantiate/Destroy.
+- [x] B.7 (code in place, exercised in C.13) `Shove.cs`: impulse via `mjData.xfrc_applied` on the base body for N physics steps.
+- [x] B.8 Testbed scene: 9:16 portrait Game view, follow camera, ground plane, uGUI HUD (TL title / TC fps+tick / TR behaviour dropdown / BL reset+shove / BR version).
+- [x] B.9 Dummy ONNX: `training/export_onnx.py` emits `zero_policy.onnx` (48 -> 12 zeros). Load with Inference Engine, run every 5th step, verify ctrl == default pose and the dog stands as in B.5.
+- [x] B.10 `PolicyRunner.cs`: loads an ONNX, float[] obs -> float[12]. `ReplayHarness.cs` (`PoRace.exe -batchmode -replay <json>`) reads `reference_trajectory.json` and asserts max abs action diff < 1e-4. Run against the zero policy to prove the harness itself.
+- [x] B.11 Commit tag `phase-b-parity-scaffold`.
 
 ## Phase C: Phased Training & Verification Loop
 ### Trainer plumbing
