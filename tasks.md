@@ -7,7 +7,7 @@ Mark `[x]` when done. Each task is one commit.
 
 ## Phase 0: Repo & Toolchain
 - [x] 0.1 `git init`, Unity .gitignore, commit the template project as-is.
-- [ ] 0.2 Trainer runs in Docker (no JAX CUDA wheels on native Windows): `training/Dockerfile` + pinned `training/pyproject.toml`. Build `porace-trainer` image.
+- [x] 0.2 Trainer runs in Docker (no JAX CUDA wheels on native Windows): `training/Dockerfile` + pinned `training/pyproject.toml`. Build `porace-trainer` image.
 - [ ] 0.3 Smoke test: import mujoco_playground and run the stock Go1 joystick env for 10 steps on Warp. Record GPU, driver, versions in `rl_optimization_log.md`.
 - [x] 0.4 Install org.mujoco into Unity from the mujoco release (`unity/` package + mujoco.dll). Install com.unity.ai.inference. Commit `Packages/manifest.json`.
 - [ ] 0.5 Restart / verify Unity MCP connection (failed this session). Needed for Phase B scene authoring.
@@ -23,11 +23,11 @@ Mark `[x]` when done. Each task is one commit.
 - [x] A.7 `training/flatten_for_unity.py` -> `Assets/MuJoCo/go2_unity.xml` + meshes (importer has no include/keyframe/contact support).
 
 ## Phase B: Early Unity Ingestion & Zero-Brain Parity (CRITICAL, before any training)
-- [ ] B.1 Import `Assets/MuJoCo/go2_unity.xml` via MjcfImporter into `Assets/Scenes/Testbed.unity`. Verify hierarchy: MjScene, MjBody x(13 + 4 cubes), MjGeom, MjHingeJoint x12, MjFreeJoint x5, MjActuator x12, sensors.
-- [ ] B.2 No-PhysX assertion: editor test `NoPhysXTest.cs` fails if any Rigidbody / Collider / Joint / CharacterController exists in the scene. Added to the test runner.
-- [ ] B.3 Set `Time.fixedDeltaTime = 0.004`, gravity (0,-9.81,0) in Physics Manager, MjGlobalSettings solver options to contract values. The plugin does not parse `ls_iterations` / `eulerdamp`: set them on `mjModel.opt` from C# after scene creation. Runtime readback asserts opt.*, nq/nv/nu, body masses, actuator gainprm/biasprm, geom friction against `docs/model_summary.json` (Unity regenerates MJCF from components).
-- [ ] B.4 `Go2Controller.cs`: subscribe to `MjScene.ctrlCallback`, step counter mod 5, build obs (48 / 42) from `mjData.sensordata`, `qpos`, `qvel`; write 12 ctrl values. Starts in "hold home pose" mode (no network).
-- [ ] B.5 Zero-brain gate: 2 s passive hold at home ctrl in Unity and in Python (`training/zero_brain.py`). Dump qpos every ctrl step from both; assert max diff < 1e-3 rad per joint, base height within 2 mm. Log result in `rl_optimization_log.md`.
+- [x] B.1 Import `Assets/MuJoCo/go2_unity.xml` via MjcfImporter into `Assets/Scenes/Testbed.unity`. Verify hierarchy: MjScene, MjBody x(13 + 4 cubes), MjGeom, MjHingeJoint x12, MjFreeJoint x5, MjActuator x12, sensors.
+- [x] B.2 No-PhysX assertion: editor test `NoPhysXTest.cs` fails if any Rigidbody / Collider / Joint / CharacterController exists in the scene. Added to the test runner.
+- [x] B.3 Set `Time.fixedDeltaTime = 0.004`, gravity (0,-9.81,0) in Physics Manager, MjGlobalSettings solver options to contract values. The plugin does not parse `ls_iterations` / `eulerdamp`: set them on `mjModel.opt` from C# after scene creation. Runtime readback asserts opt.*, nq/nv/nu, body masses, actuator gainprm/biasprm, geom friction against `docs/model_summary.json` (Unity regenerates MJCF from components).
+- [x] B.4 `Go2Controller.cs`: subscribe to `MjScene.ctrlCallback`, step counter mod 5, build obs (48 / 42) from `mjData.sensordata`, `qpos`, `qvel`; write 12 ctrl values. Starts in "hold home pose" mode (no network).
+- [x] B.5 Zero-brain gate: 2 s passive hold at home ctrl in Unity and in Python (`training/zero_brain.py`). PASSED: worst |dqpos| 4.75e-8 over 101 frames. Runs via headless player `Build/Testbed/PoRace.exe -batchmode -nographics -parityDir <dir>` (editor play loop does not tick while the editor is unfocused). `training/compare_models.py` diffs the Unity-regenerated model field by field.
 - [ ] B.6 `CubePool.cs`: holds the 4 cube MjBody/MjFreeJoint refs; `Fire(pos, vel)` writes qpos/qvel of the next free cube via C# bindings; `Park()` returns it to z=-10 with zero velocity. No Instantiate/Destroy.
 - [ ] B.7 `Shove.cs`: impulse via `mjData.xfrc_applied` on the base body for N physics steps.
 - [ ] B.8 Testbed scene: 9:16 portrait Game view, follow camera, ground plane, uGUI HUD (TL title / TC fps+tick / TR behaviour dropdown / BL reset+shove / BR version).

@@ -1,0 +1,10 @@
+{
+    "name": "PoRace",
+    "rootNamespace": "PoRace",
+    "references": [
+        "Mujoco.Runtime",
+        "Unity.InferenceEngine"
+    ],
+    "allowUnsafeCode": true,
+    "autoReferenced": true
+}

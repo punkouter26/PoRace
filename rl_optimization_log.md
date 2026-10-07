@@ -21,3 +21,17 @@ Runs, decisions and gate results. Newest at the bottom.
 - Unity regenerates MJCF from its component tree at play time, so model fields (not just the file) must be compared against the trainer. Added to B.3.
 
 **check_model.py result (CPU MuJoCo 3.15.0):** nq=47 nv=42 nu=12 ngeom=61, robot mass 15.206 kg, no self-contacts at home, only feet touch the floor. Passive 2 s hold at home ctrl settles to base z = 0.2395 m (3 cm sag) and joint sag up to 0.26 rad on the calves. Those settled values are in `docs/model_summary.json` and are the zero-brain reference for Unity.
+
+## 2026-10-07 Phase B: Unity ingestion and zero-brain parity
+
+**Result: ZERO-BRAIN PARITY OK.** 2 s passive PD hold, 101 control frames, worst |dqpos| = 4.75e-8 (tolerance 1e-3). Unity model regenerated from the component tree matches the trainer model in every physical field (`training/compare_models.py`); the only differences are equivalent quaternion sign flips, visual-mesh bounds and the floor plane's render spacing.
+
+Four things that broke parity before it passed, all now handled in code:
+1. **Element order is not stable.** The plugin orders bodies/joints/actuators by EntityId, which changes between runs (cubes came first on the second run). `Go2Model.cs` resolves every qpos/dof/ctrl/sensor address by name; `ParityRecorder` dumps canonical order.
+2. **Generated names get numeric suffixes** unless `MjGlobalSettings.UseRawGameObjectNames` is on. Set in the Testbed scene.
+3. **`MjActuator.OnSyncState` rewrites `mjData.ctrl` from its `Control` field after every step**, silently discarding ctrl written in `ctrlCallback`. `Go2Controller.SetCtrl` writes both. Control is float32, so the Python reference uses float32 ctrl too (Warp is float32 anyway).
+4. **`ls_iterations`, `eulerdamp` and `ccd_iterations` are not parsed by the plugin.** Set on `mjModel.opt` in `postInitEvent`; `ModelCheck.cs` asserts them.
+
+Also: the plugin at tag 3.15.0 does not compile on Unity 6000.6 (`GetInstanceID` is a hard error); patched to `GetEntityId` in the embedded copy. The editor's player loop does not advance while the editor window is unfocused, so parity runs use the headless standalone build.
+
+Passive-hold settled state in both engines: base z 0.2395 m, calf sag up to 0.26 rad (Kp 35 vs ~15 kg).
