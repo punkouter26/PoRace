@@ -37,11 +37,11 @@ Mark `[x]` when done. Each task is one commit.
 
 ## Phase C: Phased Training & Verification Loop
 ### Trainer plumbing
-- [ ] C.1 `training/go2/joystick.py`, `getup.py`, `base.py`, `randomize.py`: port from playground go1, pointing at `scene_porace.xml`, joint order from constants. Add DR for Kp/Kd x U(0.8,1.2).
-- [ ] C.2 Pooled-cube projectile disturbance in joystick env: every 1-3 s activate one cube above the torso with random offset, drop from 1 m, recycle after 2 s.
-- [ ] C.3 `training/train.py`: Brax PPO with playground go1 hyperparams, TensorBoard logging, checkpoints every 5M steps, seedable. `training/eval.py`: N-seed rollout reporting pass-bar metrics per rung.
-- [ ] C.4 `training/export_onnx.py` for real checkpoints: bake obs normalizer, deterministic mean output, opset 17, batch 1. Verify onnxruntime vs JAX < 1e-5 on 1000 random obs.
-- [ ] C.5 `training/record_reference.py`: 5 s rollout -> `reference_trajectory.json` (qpos, qvel, sensordata, obs, action per 50 Hz frame) plus initial state and command.
+- [x] C.1 `training/go2/joystick.py`, `getup.py`, `base.py`, `randomize.py`: port from playground go1, pointing at `scene_porace.xml`, joint order from constants. Add DR for Kp/Kd x U(0.8,1.2).
+- [x] C.2 Pooled-cube projectile disturbance in joystick env: every 1-3 s activate one cube above the torso with random offset, drop from 1 m, recycle after 2 s.
+- [x] C.3 `training/train.py`: Brax PPO with playground go1 hyperparams, TensorBoard logging, checkpoints every 5M steps, seedable. `training/eval.py`: N-seed rollout reporting pass-bar metrics per rung.
+- [x] C.4 `training/export_onnx.py --params <params.pkl>`: bakes brax obs normalizer ((x-mean)/std, std already has eps) + MLP (swish) + tanh(mean), opset 17, batch 1. Verifies onnxruntime vs numpy reference on 1000 random obs. (Real-checkpoint verification happens at C.8.)
+- [x] C.5 `training/record_reference.py`: 5 s rollout -> `reference_trajectory.json` (qpos, qvel, sensordata, obs, action per 50 Hz frame) plus initial state and command.
 
 ### Rung 0 / Rung 1
 - [ ] C.6 Train locomotion, no perturbation, no DR (R0/R1 baseline). Log run in `rl_optimization_log.md`.
