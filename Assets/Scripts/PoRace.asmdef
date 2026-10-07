@@ -3,7 +3,8 @@
     "rootNamespace": "PoRace",
     "references": [
         "Mujoco.Runtime",
-        "Unity.InferenceEngine"
+        "Unity.InferenceEngine",
+        "Unity.InputSystem"
     ],
     "allowUnsafeCode": true,
     "autoReferenced": true
