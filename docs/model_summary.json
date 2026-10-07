@@ -1,0 +1,267 @@
+{
+ "timestep": 0.004,
+ "nq": 47,
+ "nv": 42,
+ "nu": 12,
+ "nbody": 18,
+ "ngeom": 61,
+ "robot_mass": 15.206408,
+ "bodies": [
+  "world",
+  "base",
+  "FL_hip",
+  "FL_thigh",
+  "FL_calf",
+  "FR_hip",
+  "FR_thigh",
+  "FR_calf",
+  "RL_hip",
+  "RL_thigh",
+  "RL_calf",
+  "RR_hip",
+  "RR_thigh",
+  "RR_calf",
+  "cube0",
+  "cube1",
+  "cube2",
+  "cube3"
+ ],
+ "joints": [
+  null,
+  "FL_hip_joint",
+  "FL_thigh_joint",
+  "FL_calf_joint",
+  "FR_hip_joint",
+  "FR_thigh_joint",
+  "FR_calf_joint",
+  "RL_hip_joint",
+  "RL_thigh_joint",
+  "RL_calf_joint",
+  "RR_hip_joint",
+  "RR_thigh_joint",
+  "RR_calf_joint",
+  "cube0_joint",
+  "cube1_joint",
+  "cube2_joint",
+  "cube3_joint"
+ ],
+ "actuators": [
+  "FL_hip",
+  "FL_thigh",
+  "FL_calf",
+  "FR_hip",
+  "FR_thigh",
+  "FR_calf",
+  "RL_hip",
+  "RL_thigh",
+  "RL_calf",
+  "RR_hip",
+  "RR_thigh",
+  "RR_calf"
+ ],
+ "sensors": [
+  {
+   "name": "gyro",
+   "adr": 0,
+   "dim": 3
+  },
+  {
+   "name": "local_linvel",
+   "adr": 3,
+   "dim": 3
+  },
+  {
+   "name": "accelerometer",
+   "adr": 6,
+   "dim": 3
+  },
+  {
+   "name": "position",
+   "adr": 9,
+   "dim": 3
+  },
+  {
+   "name": "upvector",
+   "adr": 12,
+   "dim": 3
+  },
+  {
+   "name": "forwardvector",
+   "adr": 15,
+   "dim": 3
+  },
+  {
+   "name": "global_linvel",
+   "adr": 18,
+   "dim": 3
+  },
+  {
+   "name": "global_angvel",
+   "adr": 21,
+   "dim": 3
+  },
+  {
+   "name": "orientation",
+   "adr": 24,
+   "dim": 4
+  },
+  {
+   "name": "FL_global_linvel",
+   "adr": 28,
+   "dim": 3
+  },
+  {
+   "name": "FR_global_linvel",
+   "adr": 31,
+   "dim": 3
+  },
+  {
+   "name": "RL_global_linvel",
+   "adr": 34,
+   "dim": 3
+  },
+  {
+   "name": "RR_global_linvel",
+   "adr": 37,
+   "dim": 3
+  },
+  {
+   "name": "FL_pos",
+   "adr": 40,
+   "dim": 3
+  },
+  {
+   "name": "FR_pos",
+   "adr": 43,
+   "dim": 3
+  },
+  {
+   "name": "RL_pos",
+   "adr": 46,
+   "dim": 3
+  },
+  {
+   "name": "RR_pos",
+   "adr": 49,
+   "dim": 3
+  },
+  {
+   "name": "FL_floor_found",
+   "adr": 52,
+   "dim": 1
+  },
+  {
+   "name": "FR_floor_found",
+   "adr": 53,
+   "dim": 1
+  },
+  {
+   "name": "RL_floor_found",
+   "adr": 54,
+   "dim": 1
+  },
+  {
+   "name": "RR_floor_found",
+   "adr": 55,
+   "dim": 1
+  }
+ ],
+ "home_qpos": [
+  0.0,
+  0.0,
+  0.27,
+  1.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.9,
+  -1.8,
+  0.0,
+  0.9,
+  -1.8,
+  0.0,
+  0.9,
+  -1.8,
+  0.0,
+  0.9,
+  -1.8,
+  20.0,
+  20.0,
+  0.05,
+  1.0,
+  0.0,
+  0.0,
+  0.0,
+  22.0,
+  20.0,
+  0.05,
+  1.0,
+  0.0,
+  0.0,
+  0.0,
+  24.0,
+  20.0,
+  0.05,
+  1.0,
+  0.0,
+  0.0,
+  0.0,
+  26.0,
+  20.0,
+  0.05,
+  1.0,
+  0.0,
+  0.0,
+  0.0
+ ],
+ "settled_qpos_after_2s_hold": [
+  -0.06000727971680102,
+  -4.2500278914591526e-07,
+  0.23953278769919512,
+  0.9995783621096928,
+  1.3366854255194973e-07,
+  -0.029036149918193505,
+  -1.20390759667812e-07,
+  0.02180645104910308,
+  0.8262531229991719,
+  -1.9567063039471047,
+  -0.021806744367869058,
+  0.8262525952685835,
+  -1.9567064422052436,
+  0.04999703513999814,
+  0.842544708705363,
+  -2.0582485073248087,
+  -0.04999661953920055,
+  0.8425443716258535,
+  -2.058249041021236,
+  20.0,
+  20.0,
+  0.049999732426823186,
+  1.0,
+  2.6245901015793135e-17,
+  -5.532380932882439e-18,
+  3.140326195140225e-22,
+  22.0,
+  20.0,
+  0.049999732426823186,
+  1.0,
+  2.6245901015793135e-17,
+  -5.532380932882439e-18,
+  3.140326195140225e-22,
+  24.0,
+  20.0,
+  0.049999732426823186,
+  1.0,
+  2.6245901015793135e-17,
+  -5.532380932882439e-18,
+  3.140326195140225e-22,
+  26.0,
+  20.0,
+  0.049999732426823186,
+  1.0,
+  2.6249281940228906e-17,
+  -5.532380932882439e-18,
+  3.1403261951402245e-22
+ ]
+}

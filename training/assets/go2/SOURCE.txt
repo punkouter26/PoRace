@@ -1,0 +1,1 @@
+mujoco_menagerie 0059d4335f8156206f63a35662313385f7ad6d74 unitree_go2 (go2_mjx.xml + assets/)

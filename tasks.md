@@ -6,24 +6,26 @@ Contract: 4 ms sim step, 50 Hz control (decimation 5), PD gainprm 35 / biasprm 0
 Mark `[x]` when done. Each task is one commit.
 
 ## Phase 0: Repo & Toolchain
-- [ ] 0.1 `git init`, Unity .gitignore, commit the template project as-is.
-- [ ] 0.2 Create `training/` with a uv/venv: mujoco, mujoco-warp, mujoco_playground, brax, onnx, onnxruntime. Pin versions in `training/pyproject.toml`.
+- [x] 0.1 `git init`, Unity .gitignore, commit the template project as-is.
+- [ ] 0.2 Trainer runs in Docker (no JAX CUDA wheels on native Windows): `training/Dockerfile` + pinned `training/pyproject.toml`. Build `porace-trainer` image.
 - [ ] 0.3 Smoke test: import mujoco_playground and run the stock Go1 joystick env for 10 steps on Warp. Record GPU, driver, versions in `rl_optimization_log.md`.
-- [ ] 0.4 Install org.mujoco into Unity from the mujoco release (`unity/` package + mujoco.dll). Install com.unity.ai.inference. Commit `Packages/manifest.json`.
+- [x] 0.4 Install org.mujoco into Unity from the mujoco release (`unity/` package + mujoco.dll). Install com.unity.ai.inference. Commit `Packages/manifest.json`.
 - [ ] 0.5 Restart / verify Unity MCP connection (failed this session). Needed for Phase B scene authoring.
 
 ## Phase A: Rig & Physics Body Derivation
-- [ ] A.1 Copy menagerie `unitree_go2/` (go2_mjx.xml + assets/*.obj) into `training/assets/go2/`. Record menagerie commit hash.
-- [ ] A.2 Author `go2_porace.xml`: full-collision body geoms (port from go1_mjx_fullcollisions.xml classes), explicit option block (timestep 0.004, Euler, pyramidal cone, impratio 100, iterations 1, ls_iterations 5, eulerdamp disable), gainprm/biasprm/damping baked in, no inheritrange.
-- [ ] A.3 Add sensors on the imu site: gyro, velocimeter (local_linvel), framezaxis (upvector), framelinvel/frameangvel (global), accelerometer, foot positions, foot floor contact sensors. Match go1 `sensor_fullcollision.xml` names.
-- [ ] A.4 Add 4 pooled cubes to `scene_porace.xml`: body at z=-10 with freejoint, box geom size 0.05, mass 1, friction 0.6, condim 3. Floor plane friction 0.6, condim 3, contype 1, conaffinity 0.
-- [ ] A.5 Lock the joint/actuator order table (FL,FR,RL,RR x hip,thigh,calf) into `training/go2/constants.py` and `docs/joint_order.md`. One table, referenced by both Python and C#.
-- [ ] A.6 `training/check_model.py`: load XML, assert nu=12, nq=19+4*7, actuator order, forcerange, timestep, zero robot self-penetration at keyframe home, total mass ~15.2 kg. Dump `docs/model_summary.json`.
+- [x] A.1 Copy menagerie `unitree_go2/` (go2_mjx.xml + assets/*.obj) into `training/assets/go2/`. Record menagerie commit hash.
+- [x] A.2 Author `go2_porace.xml`: full-collision body geoms (port from go1_mjx_fullcollisions.xml classes), explicit option block (timestep 0.004, Euler, pyramidal cone, impratio 100, iterations 1, ls_iterations 5, eulerdamp disable), gainprm/biasprm/damping baked in, no inheritrange.
+- [x] A.3 Add sensors on the imu site: gyro, velocimeter (local_linvel), framezaxis (upvector), framelinvel/frameangvel (global), accelerometer, foot positions, foot floor contact sensors. Match go1 `sensor_fullcollision.xml` names.
+- [x] A.4 Add 4 pooled cubes to `scene_porace.xml`: parked on the floor at (20+2k, 20, 0.05) with freejoint, box geom size 0.05, mass 1, friction 0.6, condim 3. Floor plane friction 0.6, condim 3, contype 1, conaffinity 0. (Parking below the plane = deep penetration; rejected.)
+- [x] A.5 Lock the joint/actuator order table (FL,FR,RL,RR x hip,thigh,calf) into `training/go2/constants.py` and `docs/joint_order.md`. One table, referenced by both Python and C#.
+- [x] A.6 `training/check_model.py`: load XML, assert nu=12, nq=19+4*7, actuator order, forcerange, timestep, zero robot self-penetration at keyframe home, total mass ~15.2 kg. Dump `docs/model_summary.json`.
+
+- [x] A.7 `training/flatten_for_unity.py` -> `Assets/MuJoCo/go2_unity.xml` + meshes (importer has no include/keyframe/contact support).
 
 ## Phase B: Early Unity Ingestion & Zero-Brain Parity (CRITICAL, before any training)
-- [ ] B.1 Import `scene_porace.xml` via MjcfImporter into `Assets/Scenes/Testbed.unity`. Verify hierarchy: MjScene, MjBody x(13 + 4 cubes), MjGeom, MjHingeJoint x12, MjFreeJoint x5, MjActuator x12, sensors.
+- [ ] B.1 Import `Assets/MuJoCo/go2_unity.xml` via MjcfImporter into `Assets/Scenes/Testbed.unity`. Verify hierarchy: MjScene, MjBody x(13 + 4 cubes), MjGeom, MjHingeJoint x12, MjFreeJoint x5, MjActuator x12, sensors.
 - [ ] B.2 No-PhysX assertion: editor test `NoPhysXTest.cs` fails if any Rigidbody / Collider / Joint / CharacterController exists in the scene. Added to the test runner.
-- [ ] B.3 Set `Time.fixedDeltaTime = 0.004`, gravity (0,-9.81,0) in Physics Manager, MjGlobalSettings solver options to contract values. Runtime log at scene start reads back `mjModel.opt.*` and asserts.
+- [ ] B.3 Set `Time.fixedDeltaTime = 0.004`, gravity (0,-9.81,0) in Physics Manager, MjGlobalSettings solver options to contract values. The plugin does not parse `ls_iterations` / `eulerdamp`: set them on `mjModel.opt` from C# after scene creation. Runtime readback asserts opt.*, nq/nv/nu, body masses, actuator gainprm/biasprm, geom friction against `docs/model_summary.json` (Unity regenerates MJCF from components).
 - [ ] B.4 `Go2Controller.cs`: subscribe to `MjScene.ctrlCallback`, step counter mod 5, build obs (48 / 42) from `mjData.sensordata`, `qpos`, `qvel`; write 12 ctrl values. Starts in "hold home pose" mode (no network).
 - [ ] B.5 Zero-brain gate: 2 s passive hold at home ctrl in Unity and in Python (`training/zero_brain.py`). Dump qpos every ctrl step from both; assert max diff < 1e-3 rad per joint, base height within 2 mm. Log result in `rl_optimization_log.md`.
 - [ ] B.6 `CubePool.cs`: holds the 4 cube MjBody/MjFreeJoint refs; `Fire(pos, vel)` writes qpos/qvel of the next free cube via C# bindings; `Park()` returns it to z=-10 with zero velocity. No Instantiate/Destroy.

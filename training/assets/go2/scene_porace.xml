@@ -1,0 +1,61 @@
+<!--
+  PoRace training/parity scene: Go2 + flat floor + 4 pooled projectile cubes.
+  Cubes park on the floor far from the origin (x=20+2k, y=20) and are fired by writing qpos/qvel.
+  qpos layout: [0:19] robot (7 free + 12 joints), then 7 per cube in order cube0..cube3.
+  Keyframe "home" lives here because nq includes the cubes.
+  Unity cannot read <include>; training/flatten_for_unity.py emits the flat go2_unity.xml.
+-->
+<mujoco model="go2 porace scene">
+  <include file="go2_porace.xml"/>
+
+  <statistic center="0 0 0.1" extent="0.8" meansize="0.04"/>
+
+  <visual>
+    <headlight diffuse=".8 .8 .8" ambient=".2 .2 .2" specular="1 1 1"/>
+    <global azimuth="120" elevation="-20"/>
+    <quality shadowsize="8192"/>
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="1 1 1" rgb2="1 1 1" width="800" height="800"/>
+    <texture type="2d" name="groundplane" builtin="checker" mark="edge" rgb1="1 1 1" rgb2="1 1 1" markrgb="0 0 0"
+      width="300" height="300"/>
+    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance="0"/>
+    <material name="cube" rgba="0.9 0.3 0.1 1"/>
+  </asset>
+
+  <default>
+    <default class="cube">
+      <geom type="box" size="0.05 0.05 0.05" mass="1" friction="0.6" condim="3" contype="1" conaffinity="1"
+        material="cube"/>
+    </default>
+  </default>
+
+  <worldbody>
+    <geom name="floor" size="0 0 0.01" type="plane" material="groundplane" priority="1" friction="0.6" condim="3"
+      contype="1" conaffinity="0"/>
+
+    <body name="cube0" pos="20 20 0.05"><freejoint name="cube0_joint"/><geom name="cube0_geom" class="cube"/></body>
+    <body name="cube1" pos="22 20 0.05"><freejoint name="cube1_joint"/><geom name="cube1_geom" class="cube"/></body>
+    <body name="cube2" pos="24 20 0.05"><freejoint name="cube2_joint"/><geom name="cube2_geom" class="cube"/></body>
+    <body name="cube3" pos="26 20 0.05"><freejoint name="cube3_joint"/><geom name="cube3_geom" class="cube"/></body>
+  </worldbody>
+
+  <sensor>
+    <contact name="FL_floor_found" geom1="FL" geom2="floor" reduce="mindist" num="1" data="found"/>
+    <contact name="FR_floor_found" geom1="FR" geom2="floor" reduce="mindist" num="1" data="found"/>
+    <contact name="RL_floor_found" geom1="RL" geom2="floor" reduce="mindist" num="1" data="found"/>
+    <contact name="RR_floor_found" geom1="RR" geom2="floor" reduce="mindist" num="1" data="found"/>
+  </sensor>
+
+  <keyframe>
+    <key name="home"
+      qpos="0 0 0.27 1 0 0 0
+            0 0.9 -1.8  0 0.9 -1.8  0 0.9 -1.8  0 0.9 -1.8
+            20 20 0.05 1 0 0 0
+            22 20 0.05 1 0 0 0
+            24 20 0.05 1 0 0 0
+            26 20 0.05 1 0 0 0"
+      ctrl="0 0.9 -1.8 0 0.9 -1.8 0 0.9 -1.8 0 0.9 -1.8"/>
+  </keyframe>
+</mujoco>
