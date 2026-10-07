@@ -12,6 +12,19 @@ import time
 from pathlib import Path
 
 import jax
+import jax.numpy as jnp
+import numpy as np
+
+# brax 0.14.2 still calls jax.device_put_replicated, removed in jax 0.11. Drop-in from the pmap migration guide.
+try:
+  jax.device_put_replicated
+except AttributeError:
+  def _device_put_replicated(x, devices):
+    sh = jax.sharding.NamedSharding(jax.sharding.Mesh(np.array(devices), ("d",)), jax.sharding.PartitionSpec("d"))
+    return jax.tree_util.tree_map(
+        lambda a: jax.device_put(jnp.broadcast_to(jnp.asarray(a), (len(devices),) + jnp.shape(a)), sh), x)
+  jax.device_put_replicated = _device_put_replicated
+
 from brax.io import model as brax_model
 from brax.training.agents.ppo import networks as ppo_networks
 from brax.training.agents.ppo import train as ppo

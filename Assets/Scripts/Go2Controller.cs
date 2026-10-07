@@ -57,6 +57,14 @@ public unsafe class Go2Controller : MonoBehaviour {
   }
 
   void Start() {
+    var args = System.Environment.GetCommandLineArgs();  // headless harness: -command vx vy yaw  -mode HoldHome|Locomotion|Getup
+    for (int i = 0; i < args.Length; i++) {
+      if (args[i] == "-command" && i + 3 < args.Length)
+        command = new Vector3(float.Parse(args[i + 1], System.Globalization.CultureInfo.InvariantCulture),
+                              float.Parse(args[i + 2], System.Globalization.CultureInfo.InvariantCulture),
+                              float.Parse(args[i + 3], System.Globalization.CultureInfo.InvariantCulture));
+      if (args[i] == "-mode" && i + 1 < args.Length) mode = (Go2Mode)Enum.Parse(typeof(Go2Mode), args[i + 1]);
+    }
     if (locomotionModel != null) _loco = new PolicyRunner(locomotionModel, ObsJoystick, Nu);
     if (getupModel != null) _getup = new PolicyRunner(getupModel, ObsGetup, Nu);
   }

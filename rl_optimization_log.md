@@ -35,3 +35,21 @@ Four things that broke parity before it passed, all now handled in code:
 Also: the plugin at tag 3.15.0 does not compile on Unity 6000.6 (`GetInstanceID` is a hard error); patched to `GetEntityId` in the embedded copy. The editor's player loop does not advance while the editor window is unfocused, so parity runs use the headless standalone build.
 
 Passive-hold settled state in both engines: base z 0.2395 m, calf sag up to 0.26 rad (Kp 35 vs ~15 kg).
+
+## 2026-10-07 Phase C plumbing (trainer)
+
+- Ported playground `go1` joystick/getup to `training/go2/` on `scene_porace.xml`. Obs 48 / 42 confirmed on Warp.
+- **njmax 40 (go1 default) silently drops the pooled cubes through the floor**: the four condim-6 pyramidal feet already use 40 constraint rows. Joystick now uses njmax 128, naconmax 8*8192.
+- playground 0.2.0 (PyPI) differs from GitHub main: model upload is `mjx.put_model(m, impl=)`.
+- brax 0.14.2 calls `jax.device_put_replicated`, removed in jax 0.11.2. `train.py` installs a drop-in shim before importing brax.
+- Exporter matches brax exactly: normalize is `(x - mean) / std` with std already containing `std_eps`; MLP layers `hidden_i`, swish, final `tanh(mean)` of the NormalTanh head.
+- `training/gate.sh <run>` = C.8/C.9 in one go: export -> eval R0/R1 -> reference -> assign ONNX + rebuild headless player -> replay -> closed loop -> compare.
+
+## 2026-10-07 Sanity run + gate harness dry run (throwaway policy `runs/sanity`)
+
+- `train.py --timesteps 2000000 --num_envs 2048`: brax rounded to 14.7M steps, 809 s on the RTX 5070 Ti (about 5 min of that is JIT). Final eval reward 16.2. The policy already stands (R0 3/3) but does not walk (0.01 m/s on a 0.5 m/s command).
+- Exporter: ONNX vs numpy reference 2.97e-6 worst over 1000 random obs.
+- Unity replay gate on the trainer's own 250-frame reference: worst |da| = 3.58e-7 (tol 1e-4). Inference Engine CPU backend reproduces the JAX policy.
+- Closed-loop 5 s from the same state and command: PASS on all four metrics (upright, speed, cadence, force). max |dqpos| drifts to 2.8e-2 by 5 s, expected float32 chaos in a closed loop; the metrics, not raw qpos, are the gate.
+- Git Bash mangles `/docs` style container paths: `MSYS_NO_PATHCONV=1` in gate.sh. CPU-only tools run with `JAX_PLATFORMS=cpu` to skip the CUPTI probe.
+- Rung 1 full run launched: `train.py --env joystick --logdir runs/r1` (200M steps, 8192 envs, no pert/DR).

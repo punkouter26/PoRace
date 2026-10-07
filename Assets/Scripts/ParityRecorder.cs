@@ -20,7 +20,14 @@ public unsafe class ParityRecorder : MonoBehaviour {
   int _physicsStep;
   bool _done;
 
-  void Awake() { MjScene.Instance.postUpdateEvent += OnPostStep; }
+  void Awake() {
+    var args = System.Environment.GetCommandLineArgs();  // -seconds S  -parityFile name.json  -parityDir <abs dir>
+    for (int i = 0; i + 1 < args.Length; i++) {
+      if (args[i] == "-seconds") seconds = float.Parse(args[i + 1], CultureInfo.InvariantCulture);
+      if (args[i] == "-parityFile") fileName = args[i + 1];
+    }
+    MjScene.Instance.postUpdateEvent += OnPostStep;
+  }
   void OnDestroy() { if (MjScene.InstanceExists) MjScene.Instance.postUpdateEvent -= OnPostStep; }
 
   void OnPostStep(object sender, MjStepArgs a) {

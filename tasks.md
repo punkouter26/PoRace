@@ -44,7 +44,7 @@ Mark `[x]` when done. Each task is one commit.
 - [x] C.5 `training/record_reference.py`: 5 s rollout -> `reference_trajectory.json` (qpos, qvel, sensordata, obs, action per 50 Hz frame) plus initial state and command.
 
 ### Rung 0 / Rung 1
-- [ ] C.6 Train locomotion, no perturbation, no DR (R0/R1 baseline). Log run in `rl_optimization_log.md`.
+- [ ] C.6 Train locomotion, no perturbation, no DR (R0/R1 baseline). Log run in `rl_optimization_log.md`. (runs/r1 in progress; pipeline + gate harness proven on runs/sanity)
 - [ ] C.7 Eval R0 (zero command, 10 s, 10 seeds) and R1 (velocity error < 0.2 m/s, 10 seeds). Viewer inspection.
 - [ ] C.8 Export R1 ONNX + reference_trajectory.json.
 - [ ] C.9 EARLY VERIFICATION GATE in Unity: replay test (< 1e-4), closed-loop 5 s comparison (upright, speed +-0.1 m/s, cadence +-10 %, actuator force +-15 %). If divergent: STOP, fix timestep / solver / ctrl timing / gains, re-run B.5, repeat. Record outcome.

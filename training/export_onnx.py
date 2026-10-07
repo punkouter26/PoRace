@@ -23,7 +23,10 @@ NORM_EPS = 0.0  # brax running_statistics: std already = sqrt(var + std_eps), no
 def unpack_params(params):
   """Brax PPO params -> (mean, std, [(W, b), ...]) with the policy head cut to the action mean."""
   norm, policy = params[0], params[1]
-  mean, std = np.asarray(norm.mean, np.float32), np.asarray(norm.std, np.float32)
+  mean, std = norm.mean, norm.std
+  if isinstance(mean, dict):  # playground envs return {"state", "privileged_state"}; the policy sees "state"
+    mean, std = mean["state"], std["state"]
+  mean, std = np.asarray(mean, np.float32), np.asarray(std, np.float32)
   p = policy["params"]
   keys = sorted(p.keys(), key=lambda k: int(k.split("_")[1]))
   layers = [(np.asarray(p[k]["kernel"], np.float32), np.asarray(p[k]["bias"], np.float32)) for k in keys]
