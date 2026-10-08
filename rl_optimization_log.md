@@ -77,3 +77,8 @@ Passive-hold settled state in both engines: base z 0.2395 m, calf sag up to 0.26
 - The container became an unkillable zombie; `docker desktop restart` hung; recovery was killing Docker's processes, `wsl --shutdown`, and starting Docker Desktop again. Future trainer runs should use `docker run --init --log-driver none` (reap children, and stop the Warp solver warnings from filling the container log).
 - `train.py` now sizes `naconmax = 30 * num_worlds` per env instance (training env and eval env separately). Untested.
 - To resume: `docker run --rm --init --log-driver none --gpus all -v <repo>\training:/work porace-trainer python train.py --env joystick --num_envs 4096 --logdir runs/r1 --restore runs/r1/checkpoints`, check the first eval for finite loss and 0 nan_resets, then `training/gate.sh runs/r1`.
+
+## 2026-10-08 Rung 1 resumed as runs/r1b (4096 envs, per-instance naconmax) after reboot
+
+- The stall is fixed: evals arrive every ~14 min (23M steps), GPU memory steady at 5.4 GB, `nan_resets` 0. Per-instance `naconmax = 30 * num_worlds` confirmed (the eval env no longer allocates training-size buffers). Launch via `--init --log-driver none --name porace-r1`.
+- Reward 17.2 -> 18.2 -> 18.8 over the first 46M resumed steps. `diag_r1.py` on the 46M checkpoint: turns on command (0.85 of 1.0 rad/s) but stands still for every linear command, mean error 0.56 (bar 0.2). Reward terms: pose saturated (453), tracking_lin_vel rising slowly 277 -> 288 -> 307 of ~1000, swing peak and feet slip rising, so it is beginning to step. Decision: let the 200M run finish before changing rewards.
