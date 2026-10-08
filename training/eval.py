@@ -86,16 +86,19 @@ def run(rung, params, seeds):
         sim.control_step(np.zeros(3, np.float32)); ok &= sim.upright()
       details.append(f"seed {seed}: {'upright' if ok else 'FELL'} z={sim.d.qpos[2]:.3f}")
     elif rung == "r1":
+      # Randomized per seed: joint offsets at start, a 1.5 m/s command from standstill, then 4 random commands.
       sim.reset(rng); errs = []; ok = True
-      for cmd in [[1.0, 0, 0], [1.5, 0, 0], [0, 0.5, 0], [0, 0, 1.0], [0.5, 0, -1.0]]:
+      sim.d.qpos[Q] += rng.uniform(-0.1, 0.1, 12); mujoco.mj_forward(sim.m, sim.d)
+      cmds = [[1.5, 0, 0]] + [[rng.uniform(-1.0, 1.5), rng.uniform(-0.6, 0.6), rng.uniform(-1.0, 1.0)] for _ in range(4)]
+      for cmd in cmds:
         cmd = np.array(cmd, np.float32)
         for k in range(int(3 / C.CTRL_DT)):
           sim.control_step(cmd); ok &= sim.upright()
           if k >= int(1 / C.CTRL_DT):  # after 1 s transient
             v = sim.sensor(C.LOCAL_LINVEL_SENSOR); w = sim.sensor(C.GYRO_SENSOR)
             errs.append(np.linalg.norm([v[0] - cmd[0], v[1] - cmd[1], 0.5 * (w[2] - cmd[2])]))
-      e = float(np.mean(errs)); ok &= e < 0.2
-      details.append(f"seed {seed}: mean vel err {e:.3f} {'OK' if ok else 'FAIL'}")
+      e = float(np.mean(errs)); e0 = float(np.mean(errs[:100])); ok &= e < 0.2
+      details.append(f"seed {seed}: mean vel err {e:.3f} (1.5 m/s from standstill: {e0:.3f}) {'OK' if ok else 'FAIL'}")
     elif rung == "r2":
       sim.reset(rng); ok = True; cmd = np.array([0.5, 0, 0], np.float32)
       for k in range(int(8 / C.CTRL_DT)):
@@ -121,10 +124,48 @@ def run(rung, params, seeds):
   return passes >= need
 
 
+def run_combo(loco_params, getup_params, seeds):
+  """Walk at 0.5 m/s, get flipped onto a random fallen pose at 2 s, stand up with the getup policy, switch back
+  (same rule as Unity: Getup when upvector z < 0, Locomotion after 0.5 s with z > 0.9) and walk again.
+  Pass: back in Locomotion within 5 s of the flip and mean forward speed > 0.3 m/s over the last 2 s of 10 s."""
+  sim = Sim(loco_params, "joystick"); getup = policy_from_params(getup_params); loco = sim.policy
+  passes = 0; cmd = np.array([0.5, 0, 0], np.float32)
+  for seed in range(seeds):
+    rng = np.random.default_rng(seed); sim.reset(rng); sim.env, sim.policy = "joystick", loco
+    active = "loco"; upright_for = 0.0; t_back = None; vx = []
+    for k in range(int(10 / C.CTRL_DT)):
+      t = k * C.CTRL_DT
+      if k == int(2 / C.CTRL_DT):
+        while True:  # resample until the body z axis points clearly downward-ish, so it really falls
+          q = rng.normal(size=4); q /= np.linalg.norm(q)
+          if 1 - 2 * (q[1] ** 2 + q[2] ** 2) < -0.2: break
+        sim.d.qpos[3:7] = q; sim.d.qpos[2] = 0.5
+        sim.d.qpos[Q] = rng.uniform(sim.m.jnt_range[1:13, 0], sim.m.jnt_range[1:13, 1]); sim.d.qvel[:C.NV_ROBOT] = 0
+        mujoco.mj_forward(sim.m, sim.d)
+      up = sim.sensor(C.UPVECTOR_SENSOR)[2]
+      upright_for = upright_for + C.CTRL_DT if up > 0.9 else 0.0
+      if active == "loco" and up < 0: active = "getup"; sim.last_act[:] = 0
+      elif active == "getup" and upright_for > 0.5:
+        active = "loco"; sim.last_act[:] = 0
+        if t > 2 and t_back is None: t_back = t - 2
+      sim.env, sim.policy = ("joystick", loco) if active == "loco" else ("getup", getup)
+      sim.control_step(cmd)
+      if t >= 8: vx.append(sim.sensor(C.LOCAL_LINVEL_SENSOR)[0])
+    v = float(np.mean(vx)); ok = t_back is not None and t_back <= 5.0 and v > 0.3 and sim.upright() and active == "loco"
+    print(f"seed {seed}: back to walking after {t_back if t_back is None else round(t_back, 2)} s, final speed {v:.2f} m/s {'OK' if ok else 'FAIL'}")
+    passes += ok
+  need = int(0.9 * seeds)
+  print(f"COMBO: {passes}/{seeds} passed (need {need}) -> {'PASS' if passes >= need else 'FAIL'}")
+  return passes >= need
+
+
 if __name__ == "__main__":
   ap = argparse.ArgumentParser()
-  ap.add_argument("--rung", choices=["r0", "r1", "r2", "r3"], required=True)
+  ap.add_argument("--rung", choices=["r0", "r1", "r2", "r3", "combo"], required=True)
+  ap.add_argument("--getup_params")
   ap.add_argument("--params", required=True)
   ap.add_argument("--seeds", type=int, default=10)
   a = ap.parse_args()
+  if a.rung == "combo":
+    raise SystemExit(0 if run_combo(brax_model.load_params(a.params), brax_model.load_params(a.getup_params), a.seeds) else 1)
   raise SystemExit(0 if run(a.rung, brax_model.load_params(a.params), a.seeds) else 1)

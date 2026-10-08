@@ -20,6 +20,7 @@ public unsafe class StressTest : MonoBehaviour {
     for (int i = 0; i < args.Length; i++) {
       if (args[i] == "-stress") _on = true;
       if (args[i] == "-getupTest") { _on = true; _getupTest = true; }
+      if (args[i] == "-comboTest") { _on = true; _combo = true; }
       if (args[i] == "-stressSeed" && i + 1 < args.Length) UnityEngine.Random.InitState(int.Parse(args[i + 1]));
     }
     if (!_on) return;
@@ -31,6 +32,7 @@ public unsafe class StressTest : MonoBehaviour {
     if (_done || controller.Model == null) return;
     double t = a.data->time; double up = a.data->sensordata[controller.Model.UpAdr + 2];
     if (_getupTest) { GetupStep(a, t, up); return; }
+    if (_combo) { ComboStep(a, t, up); return; }
     if (!_pushed && t >= 2.0) { shove.PushRandom(); _pushed = true; }
     if (!_dropped && t >= 5.0) { cubes.DropOnRobot(); _dropped = true; }
     if (t > 2.5) { _minUp = Math.Min(_minUp, up); if (up <= 0) _ok = false; }
@@ -67,6 +69,34 @@ public unsafe class StressTest : MonoBehaviour {
     }
   }
   double _t0;
+
+  /// <summary>End-to-end recovery, same as training/eval.py combo: walk at the commanded speed, get flipped onto a
+  /// fallen pose at 2 s, auto-switch to the getup policy, switch back, and be walking again (> 0.3 m/s over 8-10 s).</summary>
+  bool _combo, _flipped, _sawGetup; double _backAt = -1, _vSum; int _vN;
+  void ComboStep(MjStepArgs a, double t, double up) {
+    var d = a.data; var M = controller.Model;
+    if (!_flipped && t >= 2.0) {
+      _flipped = true;
+      Quaternion q; do { q = UnityEngine.Random.rotationUniform; } while (1 - 2 * (q.x * q.x + q.y * q.y) > -0.2f);
+      d->qpos[M.BaseQpos + 2] = 0.5;
+      d->qpos[M.BaseQpos + 3] = q.w; d->qpos[M.BaseQpos + 4] = q.x; d->qpos[M.BaseQpos + 5] = q.y; d->qpos[M.BaseQpos + 6] = q.z;
+      for (int i = 0; i < 12; i++) d->qpos[M.JointQpos[i]] = UnityEngine.Random.Range(Lo[i % 3], Hi[i % 3]);
+      for (int i = 0; i < 6; i++) d->qvel[M.BaseDof + i] = 0;
+      for (int i = 0; i < 12; i++) d->qvel[M.JointDof[i]] = 0;
+      MujocoLib.mj_forward(a.model, d);
+      return;
+    }
+    if (_flipped && controller.Active == Go2Mode.Getup) _sawGetup = true;
+    if (_sawGetup && _backAt < 0 && controller.Active == Go2Mode.Locomotion) _backAt = t - 2.0;
+    if (t >= 8.0) { _vSum += d->sensordata[M.LinvelAdr]; _vN++; }
+    if (t >= 10.0) {
+      _done = true;
+      double v = _vSum / Math.Max(1, _vN);
+      bool ok = _sawGetup && _backAt >= 0 && _backAt <= 5.0 && v > 0.3 && up > 0;
+      Debug.Log($"[Combo] {(ok ? "PASS" : "FAIL")} sawGetup={_sawGetup} backAfter={_backAt:F2}s finalSpeed={v:F2} upZ={up:F2}");
+      Application.Quit(ok ? 0 : 1);
+    }
+  }
 }
 
 }
