@@ -32,7 +32,9 @@ def default_config() -> config_dict.ConfigDict:
       pert_config=config_dict.create(enable=False, velocity_kick=[0.0, 3.0], kick_durations=[0.05, 0.2],
                                      kick_wait_times=[1.0, 3.0]),
       cube_config=config_dict.create(enable=False, wait_times=[1.0, 3.0], drop_height=1.0, xy_jitter=0.15),
-      command_config=config_dict.create(a=[1.5, 0.8, 1.2], b=[0.9, 0.25, 0.5]),
+      # Commands are sampled uniformly in [lo, a]; lo defaults to -a (symmetric). A racing policy uses a fast forward
+      # range with a modest reverse, e.g. a=[3.0, 0.8, 1.2], lo=[-1.0, -0.8, -1.2].
+      command_config=config_dict.create(a=[1.5, 0.8, 1.2], lo=[-1.5, -0.8, -1.2], b=[0.9, 0.25, 0.5]),
       impl="warp", naconmax=20 * 8192, njmax=128,  # full-collision model: a fallen dog has ~25 contacts; 4-8/env (go1 feet-only) drops contacts and bodies sink through the floor
   )
 
@@ -56,6 +58,7 @@ class Joystick(Go2Env):
       adr.append(list(range(a, a + self._mj_model.sensor_dim[sid])))
     self._foot_linvel_sensor_adr = jp.array(adr)
     self._cmd_a = jp.array(self._config.command_config.a)
+    self._cmd_lo = jp.array(self._config.command_config.lo)
     self._cmd_b = jp.array(self._config.command_config.b)
     self._cube_park = jp.array(C.CUBE_PARK_QPOS)
 
@@ -78,7 +81,7 @@ class Joystick(Go2Env):
     pert_duration_seconds = jax.random.uniform(k2, minval=pc.kick_durations[0], maxval=pc.kick_durations[1])
     info = {
         "rng": rng,
-        "command": jax.random.uniform(k5, shape=(3,), minval=-self._cmd_a, maxval=self._cmd_a),
+        "command": jax.random.uniform(k5, shape=(3,), minval=self._cmd_lo, maxval=self._cmd_a),
         "steps_until_next_cmd": jp.round(jax.random.exponential(k4) * 5.0 / self.dt).astype(jp.int32),
         "last_act": jp.zeros(self.mjx_model.nu), "last_last_act": jp.zeros(self.mjx_model.nu),
         "feet_air_time": jp.zeros(4), "last_contact": jp.zeros(4, dtype=bool), "swing_peak": jp.zeros(4),
@@ -243,7 +246,7 @@ class Joystick(Go2Env):
 
   def sample_command(self, rng: jax.Array, x_k: jax.Array) -> jax.Array:
     rng, y_rng, w_rng, z_rng = jax.random.split(rng, 4)
-    y_k = jax.random.uniform(y_rng, shape=(3,), minval=-self._cmd_a, maxval=self._cmd_a)
+    y_k = jax.random.uniform(y_rng, shape=(3,), minval=self._cmd_lo, maxval=self._cmd_a)
     z_k = jax.random.bernoulli(z_rng, self._cmd_b, shape=(3,))
     w_k = jax.random.bernoulli(w_rng, 0.5, shape=(3,))
     return x_k - w_k * (x_k - y_k * z_k)

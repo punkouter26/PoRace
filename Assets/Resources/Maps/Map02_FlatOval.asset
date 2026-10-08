@@ -1,0 +1,108 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4e361d1c7b73c747b2bd923c71256ad, type: 3}
+  m_Name: Map02_FlatOval
+  m_EditorClassIdentifier: PoRace::PoRace.MapDefinition
+  displayName: Flat Oval
+  sceneName: Track02
+  terrain: flat
+  difficulty: 2
+  closed: 1
+  defaultLaps: 2
+  halfWidth: 2
+  gridSlots: 4
+  laneSpacing: 0.8
+  checkpointSpacing: 12
+  lookAhead: 2.5
+  centerline:
+  - {x: 5, y: 0}
+  - {x: 30, y: 0}
+  - {x: 31.335125, y: 0.15043259}
+  - {x: 32.603302, y: 0.5941869}
+  - {x: 33.74094, y: 1.3090113}
+  - {x: 34.69099, y: 2.2590613}
+  - {x: 35.40581, y: 3.3966975}
+  - {x: 35.849567, y: 4.664875}
+  - {x: 36, y: 6.0000005}
+  - {x: 35.849567, y: 7.335126}
+  - {x: 35.40581, y: 8.603303}
+  - {x: 34.69099, y: 9.740939}
+  - {x: 33.74094, y: 10.690989}
+  - {x: 32.603302, y: 11.405813}
+  - {x: 31.335125, y: 11.849567}
+  - {x: 30, y: 12}
+  - {x: 0, y: 12}
+  - {x: -1.3351256, y: 11.849567}
+  - {x: -2.6033025, y: 11.405813}
+  - {x: -3.7409391, y: 10.690989}
+  - {x: -4.690989, y: 9.740939}
+  - {x: -5.405813, y: 8.603303}
+  - {x: -5.8495674, y: 7.335125}
+  - {x: -6, y: 5.9999995}
+  - {x: -5.8495674, y: 4.664874}
+  - {x: -5.405813, y: 3.396697}
+  - {x: -4.690989, y: 2.2590613}
+  - {x: -3.7409384, y: 1.309011}
+  - {x: -2.6033015, y: 0.59418654}
+  - {x: -1.3351256, y: 0.15043259}
+  - {x: 0.00000052453663, y: 0}
+  laneScale:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.24
+      value: 0.35
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.9
+      value: 0.35
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4

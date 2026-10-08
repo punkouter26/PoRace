@@ -17,6 +17,7 @@ public class Hud : MonoBehaviour {
   int _ticks, _lastTicks; float _fpsTimer; int _frames; float _fps, _tickRate;
 
   void Awake() {
+    if (!Application.isBatchMode) { QualitySettings.vSyncCount = 0; Application.targetFrameRate = 60; }  // do not burn the GPU at 500+ fps
     MjScene.Instance.postUpdateEvent += (s, a) => _ticks++;
     if (autoReset == null) autoReset = controller.GetComponent<AutoReset>();
   }
@@ -53,6 +54,7 @@ public class Hud : MonoBehaviour {
   public void OnCube() => cubes.ThrowAtRobot();
   public void OnDrop() => cubes.DropOnRobot();
   public void OnMode(int m) => controller.mode = (Go2Mode)m;
+  public void OnMenu() { if (Application.CanStreamedLevelBeLoaded("Menu")) UnityEngine.SceneManagement.SceneManager.LoadScene("Menu"); }
 
   // Behaviour selector (TR). All presets only change the command / mode or write MuJoCo state.
   void Go(Vector3 cmd) { controller.mode = Go2Mode.Locomotion; controller.command = cmd; }

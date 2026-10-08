@@ -72,7 +72,10 @@ Mark `[x]` when done. Each task is one commit.
 - [x] F.2 `RaceOrchestrator.cs`: 3 s countdown, waypoint steering through the joystick command (vx = cruise, yaw rate from heading error), split times at 25/50/75 m, finish line, checkpoint respawn, Restart button.
 - [x] F.3 Headless race tests: `PoRace.exe -batchmode -nographics -raceTest -timeScale 4 [-raceFlipAt 20]`. Plain 74.42 s (1.34 m/s, 0 respawns); flipped at 20 s: 75.67 s.
 - [x] F.4 Four racers: `Assets/Scenes/Track01x4.unity` + `MultiRaceOrchestrator.cs`. Four Go2s in ONE MuJoCo model (robot subtree cloned in-editor with `r1_`..`r3_` name prefixes), each with its own policies; lanes merge to a single line mid-track. Headless `-raceTest`: all finish (74.2 / 76.0 / 76.9 / 78.2 s), 162 robot-robot contact episodes (8.1 s), 0 respawns; 1.97 ms per control step measured (budget 5.0).
-- [ ] F.5 MapDefinition asset + Map 02 (banked oval) to exercise steering through corners.
+- [x] F.5 `MapDefinition` assets in `Assets/Resources/Maps` discovered by `MapRegistry`; `TrackBuilder` (editor) builds MuJoCo rails + visuals from the centerline. Map 02 Flat Oval (97.6 m lap, two 180 degree turns of radius 6 m), laps, track-frame chase camera. All four finish 2 laps with no respawns.
+- [x] F.6 Randomized races: seeded lane draw and 6 % cruise-speed spread per race (`-seed N` reproduces a race).
+- [x] F.7 Pre-race menu (`Menu.unity`, `MenuController`): map selector from the registry, racers 1-4, laps 1-5, Start; Menu button on the race HUD. One combined build `Build/PoRace/PoRace.exe`.
+- [ ] F.8 Banked turns (PRD Map 02 calls for 15 degree banking): needs a policy trained on slopes.
 
 ## Phase E: Later (tracked, not scheduled)
 - [ ] E.1 Android: build mujoco C library for arm64, swap plugin native binary, portrait build.
