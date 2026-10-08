@@ -53,3 +53,10 @@ Passive-hold settled state in both engines: base z 0.2395 m, calf sag up to 0.26
 - Closed-loop 5 s from the same state and command: PASS on all four metrics (upright, speed, cadence, force). max |dqpos| drifts to 2.8e-2 by 5 s, expected float32 chaos in a closed loop; the metrics, not raw qpos, are the gate.
 - Git Bash mangles `/docs` style container paths: `MSYS_NO_PATHCONV=1` in gate.sh. CPU-only tools run with `JAX_PLATFORMS=cpu` to skip the CUPTI probe.
 - Rung 1 full run launched: `train.py --env joystick --logdir runs/r1` (200M steps, 8192 envs, no pert/DR).
+
+## 2026-10-07 Rung 1 attempt 1 FAILED: NaN poisoning (run discarded, relaunched)
+
+- Symptom: TensorBoard `eval/episode_reward`, `training/policy_loss`, KL all NaN from the 22M-step eval on, while `tracking_lin_vel` and episode length looked healthy. The 92M checkpoint had NaN in every policy tensor and in the obs normalizer. CPU eval still showed "standing" only because MuJoCo resets data when it detects NaN, which disguised the failure.
+- Root cause (`training/nan_probe.py`): the Warp solver (iterations=1, ls_iterations=5, full-collision body geoms) occasionally blows a fallen env up to NaN, about 1 env per 4096 x 170 random-action steps. The termination test `upvector_z < 0` is False on NaN, so the env never reset and fed NaN into the running observation statistics, which then made every obs NaN.
+- Fix: joystick/getup `step` now terminates on any NaN in qpos/qvel, zeroes the reward, `nan_to_num`s obs and metrics, and logs `nan_resets`; the brax autoreset wrapper then swaps the env back to its reset state (`where_done` on data/obs/info). Verified by injecting NaN: done=1, obs finite, nan_resets=1. Unity `AutoReset` has the same guard (NaN base state -> home keyframe).
+- Lesson: watch `training/policy_loss` for NaN in the first 5 evals of every run; a healthy-looking tracking curve is not proof.

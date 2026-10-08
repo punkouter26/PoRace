@@ -34,8 +34,9 @@ public unsafe class AutoReset : MonoBehaviour {
     bool wantsToMove = controller.mode == Go2Mode.Locomotion && controller.command.sqrMagnitude > 0.01f;
     _stalledFor = wantsToMove && speed < stallSpeed ? _stalledFor + dt : 0f;
 
-    if (_fallenFor > fallenSeconds || _stalledFor > stallSeconds || x * x + y * y > arenaRadius * arenaRadius) {
-      Debug.Log($"[AutoReset] {State} fallen={_fallenFor:F1}s stalled={_stalledFor:F1}s pos=({x:F1},{y:F1}) -> home");
+    bool nan = double.IsNaN(d->qpos[M.BaseQpos + 2]) || double.IsNaN(d->qvel[M.BaseDof]);  // solver blow-up guard, same as the trainer
+    if (nan || _fallenFor > fallenSeconds || _stalledFor > stallSeconds || x * x + y * y > arenaRadius * arenaRadius) {
+      Debug.Log($"[AutoReset] {(nan ? "NaN state " : "")}{State} fallen={_fallenFor:F1}s stalled={_stalledFor:F1}s pos=({x:F1},{y:F1}) -> home");
       controller.ResetToHome();
       _fallenFor = _stalledFor = 0f; Resets++;
     }

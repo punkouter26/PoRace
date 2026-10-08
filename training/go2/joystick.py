@@ -91,6 +91,7 @@ class Joystick(Go2Env):
     }
     metrics = {f"reward/{k}": jp.zeros(()) for k in self._config.reward_config.scales.keys()}
     metrics["swing_peak"] = jp.zeros(())
+    metrics["nan_resets"] = jp.zeros(())
     obs = self._get_obs(data, info)
     reward, done = jp.zeros(2)
     return mjx_env.State(data, obs, reward, done, metrics, info)
@@ -137,6 +138,13 @@ class Joystick(Go2Env):
     rewards = self._get_reward(data, action, state.info, done, first_contact, contact)
     rewards = {k: v * self._config.reward_config.scales[k] for k, v in rewards.items()}
     reward = jp.clip(sum(rewards.values()) * self.dt, 0.0, 10000.0)
+    # Solver blow-ups (iterations=1) leave NaN in a few envs per 1e6 steps; a NaN fall check never terminates and
+    # poisons the obs normalizer. Terminate + sanitize so the autoreset wrapper swaps the env back to its reset state.
+    bad = jp.isnan(data.qpos).any() | jp.isnan(data.qvel).any()
+    done = done | bad
+    obs = jax.tree_util.tree_map(jp.nan_to_num, obs)
+    reward = jp.where(bad, 0.0, reward)
+    rewards = {k: jp.nan_to_num(v) for k, v in rewards.items()}
 
     state.info["last_last_act"] = state.info["last_act"]
     state.info["last_act"] = action
@@ -152,7 +160,8 @@ class Joystick(Go2Env):
     state.info["swing_peak"] *= ~contact
     for k, v in rewards.items():
       state.metrics[f"reward/{k}"] = v
-    state.metrics["swing_peak"] = jp.mean(state.info["swing_peak"])
+    state.metrics["swing_peak"] = jp.nan_to_num(jp.mean(state.info["swing_peak"]))
+    state.metrics["nan_resets"] = bad.astype(jp.float32)
     return state.replace(data=data, obs=obs, reward=reward, done=done.astype(reward.dtype))
 
   def _get_termination(self, data: mjx.Data) -> jax.Array:

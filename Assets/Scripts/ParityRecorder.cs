@@ -31,7 +31,7 @@ public unsafe class ParityRecorder : MonoBehaviour {
   void OnDestroy() { if (MjScene.InstanceExists) MjScene.Instance.postUpdateEvent -= OnPostStep; }
 
   void OnPostStep(object sender, MjStepArgs a) {
-    if (_done || controller == null || controller.Model == null) return;
+    if (_done || seconds <= 0f || controller == null || controller.Model == null) return;  // -seconds 0 = viewer mode, no recording
     // ctrlCallback ran inside this same step when _physicsStep % Decimation == 0; record after mj_step2.
     if (_physicsStep++ % Go2Controller.Decimation != 0) return;
     var d = a.data; var M = controller.Model;

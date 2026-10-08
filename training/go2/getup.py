@@ -63,6 +63,7 @@ class Getup(Go2Env):
     data = data.replace(time=0.0)
     info = {"rng": rng, "last_act": jp.zeros(self.mjx_model.nu), "last_last_act": jp.zeros(self.mjx_model.nu)}
     metrics = {f"reward/{k}": jp.zeros(()) for k in self._config.reward_config.scales.keys()}
+    metrics["nan_resets"] = jp.zeros(())
     obs = self._get_obs(data, info)
     reward, done = jp.zeros(2)
     return mjx_env.State(data, obs, reward, done, metrics, info)
@@ -75,6 +76,12 @@ class Getup(Go2Env):
     rewards = self._get_reward(data, action, state.info)
     rewards = {k: v * self._config.reward_config.scales[k] for k, v in rewards.items()}
     reward = jp.clip(sum(rewards.values()) * self.dt, 0.0, 10000.0)
+    bad = jp.isnan(data.qpos).any() | jp.isnan(data.qvel).any()  # see joystick.py
+    done = done | bad
+    obs = jax.tree_util.tree_map(jp.nan_to_num, obs)
+    reward = jp.where(bad, 0.0, reward)
+    rewards = {k: jp.nan_to_num(v) for k, v in rewards.items()}
+    state.metrics["nan_resets"] = bad.astype(jp.float32)
     state.info["last_last_act"] = state.info["last_act"]
     state.info["last_act"] = action
     for k, v in rewards.items():
