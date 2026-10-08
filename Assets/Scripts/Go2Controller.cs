@@ -183,6 +183,15 @@ public unsafe class Go2Controller : MonoBehaviour {
     if (action != null) Array.Copy(action, _lastAction, Nu); else Array.Clear(_lastAction, 0, Nu);
   }
 
+  /// <summary>Gameplay: flip the robot onto its back in place (state write only, no scene change) to demo recovery.</summary>
+  public void KnockOver() {
+    var d = MjScene.Instance.Data; var M = Model; if (M == null) return;
+    d->qpos[M.BaseQpos + 2] = 0.45;
+    d->qpos[M.BaseQpos + 3] = 0; d->qpos[M.BaseQpos + 4] = 1; d->qpos[M.BaseQpos + 5] = 0; d->qpos[M.BaseQpos + 6] = 0;  // 180 deg about x
+    for (int i = 0; i < 6; i++) d->qvel[M.BaseDof + i] = 0;
+    MujocoLib.mj_forward(MjScene.Instance.Model, d);
+  }
+
   /// <summary>ctrl is float32 on both sides: the trainer runs Warp in float32 and MjActuator.Control is a float.</summary>
   void SetCtrl(MujocoLib.mjData_* d, int i, float v) {
     d->ctrl[Model.ActId[i]] = v;

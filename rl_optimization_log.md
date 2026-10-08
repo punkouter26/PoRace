@@ -138,3 +138,11 @@ Final policies: `training/final/go2_loco_params.pkl` (= runs/r2c checkpoint 23M:
 | Parity | | | zero-brain 4.5e-8; replay 7.8e-7; closed loop metrics pass |
 
 Caveats: walking from standstill at >= 1.3 m/s relies on the 6 m/s^2 command slew limit (policy still braces on a raw step). The 0.5 m/s closed-loop run drifts to 0.78 rad max |dqpos| by 5 s while passing all gait metrics (the 1.5 m/s run stays within 7e-6); float-level divergence in a chaotic gait, not a model mismatch. R0/R3 evals are noise-free.
+
+## 2026-10-08 Phase D: game-side polish
+
+- `Assets/Scenes/Race.unity`: the validated Testbed creature without harness components (ParityRecorder, ReplayHarness, StressTest removed), authored in the editor. Behaviour selector (top right): Stand / Walk 1.0 / Run 1.5 / Turn / Flip (`Go2Controller.KnockOver` writes qpos only). Bottom left: Reset / Shove / Cube / Drop. TAB toggles telemetry. Built to `Build/Race/PoRace.exe`.
+- Editor tests: `NoPhysXTest` 2/2 (no Rigidbody/Collider/Joint in Testbed or Race; fixed timestep 0.004).
+- Performance (`PerfProbe`, headless, 10 s at 1.0 m/s): physics step mean 0.182 ms including amortized inference (inference alone 0.289 ms per call), i.e. 0.91 ms per 50 Hz control step for one racer; 3.6 ms extrapolated for four (budget 5.0). Worst single step 8.7 ms (one spike). Extrapolation only; no multi-racer scene yet.
+- Regression after the changes: stress 5/5, combo 3/3.
+- `docs/report/training_report.html` regenerated from the final results (`training/report.py`, data in `docs/report/tb_final.json`).

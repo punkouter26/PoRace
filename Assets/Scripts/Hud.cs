@@ -51,6 +51,14 @@ public class Hud : MonoBehaviour {
   public void OnCube() => cubes.ThrowAtRobot();
   public void OnDrop() => cubes.DropOnRobot();
   public void OnMode(int m) => controller.mode = (Go2Mode)m;
+
+  // Behaviour selector (TR). All presets only change the command / mode or write MuJoCo state.
+  void Go(Vector3 cmd) { controller.mode = Go2Mode.Locomotion; controller.command = cmd; }
+  public void OnStand() => Go(Vector3.zero);
+  public void OnWalk() => Go(new Vector3(1.0f, 0f, 0f));
+  public void OnRun() => Go(new Vector3(1.5f, 0f, 0f));
+  public void OnTurn() => Go(new Vector3(0.6f, 0f, 0.8f));
+  public void OnKnockOver() => controller.KnockOver();
 }
 
 }

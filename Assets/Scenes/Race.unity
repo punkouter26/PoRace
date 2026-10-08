@@ -2289,10 +2289,7 @@ GameObject:
   - component: {fileID: 177268790}
   - component: {fileID: 177268789}
   - component: {fileID: 177268788}
-  - component: {fileID: 177268787}
-  - component: {fileID: 177268792}
   - component: {fileID: 177268793}
-  - component: {fileID: 177268794}
   - component: {fileID: 177268795}
   m_Layer: 0
   m_Name: Go2Rig
@@ -2301,22 +2298,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &177268787
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 177268786}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6002bc8fb04bb3943bae85ac5e99a3ca, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: PoRace::PoRace.ParityRecorder
-  controller: {fileID: 177268790}
-  seconds: 2
-  fileName: unity_zero_brain.json
-  quitWhenDone: 1
 --- !u!114 &177268788
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2359,7 +2340,7 @@ MonoBehaviour:
   mode: 1
   locomotionModel: {fileID: 5022602860645237092, guid: 679116c67c64b66419e72adc419f89eb, type: 3}
   getupModel: {fileID: 5022602860645237092, guid: 5378fbf1e30ee2745b67cae6779d39f5, type: 3}
-  command: {x: 0.5, y: 0, z: 0}
+  command: {x: 0.6, y: 0, z: 0.3}
   autoGetup: 1
 --- !u!4 &177268791
 Transform:
@@ -2376,20 +2357,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &177268792
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 177268786}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8d36627ab47f82249aaac63d3c3858dd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: PoRace::PoRace.ReplayHarness
-  controller: {fileID: 177268790}
-  tolerance: 0.0001
 --- !u!114 &177268793
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2407,21 +2374,6 @@ MonoBehaviour:
   stallSeconds: 10
   stallSpeed: 0.05
   arenaRadius: 15
---- !u!114 &177268794
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 177268786}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 32d048cc2f2d786428a7c96dfbcfad94, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: PoRace::PoRace.StressTest
-  controller: {fileID: 177268790}
-  shove: {fileID: 177268788}
-  cubes: {fileID: 177268789}
 --- !u!114 &177268795
 MonoBehaviour:
   m_ObjectHideFlags: 0

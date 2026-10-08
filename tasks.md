@@ -61,11 +61,11 @@ Mark `[x]` when done. Each task is one commit.
 - [x] C.16 Commit tag `ladder-complete`.
 
 ## Phase D: Engine Polish & Game Loop (Step 5)
-- [ ] D.1 Author `Race.unity` via Unity MCP in-editor (no procedural scene code): 9:16 camera rig, ground, HUD anchors, behaviour selector wired to command presets (stand / walk / turn / getup demo).
-- [ ] D.2 Auto-reset: fallen > 5 s without recovery, stalled > 10 s, or out of bounds -> write keyframe home into qpos/qvel, zero ctrl, park cubes.
-- [ ] D.3 Telemetry HUD (TAB): state (RACING / STUMBLE / FALLEN_RECOVERING), base velocity, sim tick rate, inference ms.
-- [ ] D.4 Performance: profile one dog at 60 FPS portrait; inference + mj_step < 5 ms per control step. Record numbers.
-- [ ] D.5 Re-run full in-engine ladder spot-check. Commit tag `v0.1-playable`.
+- [x] D.1 Author `Race.unity` via Unity MCP in-editor (no procedural scene code): 9:16 camera rig, ground, HUD anchors, behaviour selector wired to command presets (stand / walk / turn / getup demo).
+- [x] D.2 Auto-reset: fallen > 5 s without recovery, stalled > 10 s, or out of bounds -> write keyframe home into qpos/qvel, zero ctrl, park cubes.
+- [x] D.3 Telemetry HUD (TAB): state (RACING / STUMBLE / FALLEN_RECOVERING), base velocity, sim tick rate, inference ms.
+- [x] D.4 Performance: profile one dog at 60 FPS portrait; inference + mj_step < 5 ms per control step. Record numbers.
+- [x] D.5 Re-run full in-engine ladder spot-check. Commit tag `v0.1-playable`.
 
 ## Phase E: Later (tracked, not scheduled)
 - [ ] E.1 Android: build mujoco C library for arm64, swap plugin native binary, portrait build.
