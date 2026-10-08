@@ -6,13 +6,14 @@ namespace PoRace {
 public class FollowCam : MonoBehaviour {
   public Transform target;            // the "base" MjBody transform
   public Vector3 offset = new Vector3(1.2f, 0.9f, -1.6f);
+  public Vector3 lookAhead = Vector3.zero;  // world-space offset of the look target, e.g. down the track
   public float smooth = 4f;
 
   void LateUpdate() {
     if (target == null) return;
     var want = target.position + offset;
     transform.position = Vector3.Lerp(transform.position, want, 1f - Mathf.Exp(-smooth * Time.deltaTime));
-    transform.LookAt(target.position + Vector3.up * 0.1f);
+    transform.LookAt(target.position + Vector3.up * 0.1f + lookAhead);
   }
 }
 

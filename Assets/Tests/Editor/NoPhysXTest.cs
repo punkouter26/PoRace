@@ -8,7 +8,7 @@ namespace PoRace.Tests {
 
 /// <summary>Physics engine isolation mandate: no PhysX component may exist in any PoRace scene.</summary>
 public class NoPhysXTest {
-  static readonly string[] Scenes = { "Assets/Scenes/Testbed.unity", "Assets/Scenes/Race.unity" };
+  static readonly string[] Scenes = { "Assets/Scenes/Testbed.unity", "Assets/Scenes/Race.unity", "Assets/Scenes/Track01.unity" };
 
   [Test]
   public void ScenesContainNoPhysXComponents() {

@@ -146,3 +146,10 @@ Caveats: walking from standstill at >= 1.3 m/s relies on the 6 m/s^2 command sle
 - Performance (`PerfProbe`, headless, 10 s at 1.0 m/s): physics step mean 0.182 ms including amortized inference (inference alone 0.289 ms per call), i.e. 0.91 ms per 50 Hz control step for one racer; 3.6 ms extrapolated for four (budget 5.0). Worst single step 8.7 ms (one spike). Extrapolation only; no multi-racer scene yet.
 - Regression after the changes: stress 5/5, combo 3/3.
 - `docs/report/training_report.html` regenerated from the final results (`training/report.py`, data in `docs/report/tb_final.json`).
+
+## 2026-10-08 First race: Map 01 Planar Sprint (no new training)
+
+- `Track01.unity` + `RaceOrchestrator.cs`. The racer is the validated locomotion policy driven by a waypoint steer: `vx = 1.5 * max(0.3, cos(err))`, `yaw rate = clamp(1.5 * err, +-1)`, through the same 6 m/s^2 command slew. Rails are MjGeom boxes in the MuJoCo world, so hitting them is solver contact; `NoPhysXTest` covers the scene (2/2).
+- Headless results (deterministic, identical on repeat): 100 m in 74.42 s, splits 17.79 / 36.30 / 54.88 / 74.42, average 1.34 m/s, 0 respawns. With `Go2Controller.KnockOver` at race time 20 s: getup, brain switch, resume; 75.67 s, 0 respawns (1.25 s lost).
+- Top speed is the limit: commanded 1.5, achieved about 1.35 on a long straight. Faster racing needs a policy trained on a wider command range.
+- `ResetToHome` now spawns at `spawnMj` / `spawnYaw`, which the orchestrator moves to the last checkpoint.

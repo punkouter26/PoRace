@@ -46,7 +46,8 @@ public class Hud : MonoBehaviour {
     return $"v ({d->qvel[M.BaseDof]:F2}, {d->qvel[M.BaseDof + 1]:F2}) m/s";
   }
 
-  public void OnReset() => controller.ResetToHome();
+  public RaceOrchestrator race;
+  public void OnReset() { if (race != null) race.Restart(); else controller.ResetToHome(); }
   public void OnShove() => shove.PushRandom();
   public void OnCube() => cubes.ThrowAtRobot();
   public void OnDrop() => cubes.DropOnRobot();

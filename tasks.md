@@ -67,6 +67,13 @@ Mark `[x]` when done. Each task is one commit.
 - [x] D.4 Performance: profile one dog at 60 FPS portrait; inference + mj_step < 5 ms per control step. Record numbers.
 - [x] D.5 Re-run full in-engine ladder spot-check. Commit tag `v0.1-playable`.
 
+## Phase F: First race (Map 01, Planar Sprint)
+- [x] F.1 `Assets/Scenes/Track01.unity`: 100 m straight corridor; side rails are native MuJoCo world geoms (MjGeom boxes); track surface, start/finish lines, distance markers and finish arch are visual-only meshes (no colliders).
+- [x] F.2 `RaceOrchestrator.cs`: 3 s countdown, waypoint steering through the joystick command (vx = cruise, yaw rate from heading error), split times at 25/50/75 m, finish line, checkpoint respawn, Restart button.
+- [x] F.3 Headless race tests: `PoRace.exe -batchmode -nographics -raceTest -timeScale 4 [-raceFlipAt 20]`. Plain 74.42 s (1.34 m/s, 0 respawns); flipped at 20 s: 75.67 s.
+- [ ] F.4 Four racers on the track with bump contacts and standings (PRD 4.2); confirms the 5 ms budget for real.
+- [ ] F.5 MapDefinition asset + Map 02 (banked oval) to exercise steering through corners.
+
 ## Phase E: Later (tracked, not scheduled)
 - [ ] E.1 Android: build mujoco C library for arm64, swap plugin native binary, portrait build.
 - [ ] E.2 CreatureDefinition / MapDefinition registries and pre-race menu (PRD FR-01..03).

@@ -31,6 +31,9 @@ public unsafe class Go2Controller : MonoBehaviour {
   [Tooltip("vx (m/s), vy (m/s), yaw rate (rad/s)")]
   public Vector3 command = Vector3.zero;
   public bool autoGetup = true;
+  [Tooltip("Where ResetToHome puts the robot, MuJoCo frame (x, y, z up) and heading about z. A race moves this to the last checkpoint.")]
+  public Vector3 spawnMj = new Vector3(0f, 0f, HomeHeight);
+  public float spawnYaw = 0f;
 
   public Go2Model Model { get; private set; }
   public bool Upright { get; private set; } = true;
@@ -126,8 +129,8 @@ public unsafe class Go2Controller : MonoBehaviour {
   void ResetToHome(MujocoLib.mjModel_* m, MujocoLib.mjData_* d) {
     var M = Model;
     MujocoLib.mj_resetData(m, d);
-    d->qpos[M.BaseQpos] = 0; d->qpos[M.BaseQpos + 1] = 0; d->qpos[M.BaseQpos + 2] = HomeHeight;
-    d->qpos[M.BaseQpos + 3] = 1; d->qpos[M.BaseQpos + 4] = 0; d->qpos[M.BaseQpos + 5] = 0; d->qpos[M.BaseQpos + 6] = 0;
+    d->qpos[M.BaseQpos] = spawnMj.x; d->qpos[M.BaseQpos + 1] = spawnMj.y; d->qpos[M.BaseQpos + 2] = spawnMj.z;
+    d->qpos[M.BaseQpos + 3] = Math.Cos(spawnYaw * 0.5); d->qpos[M.BaseQpos + 4] = 0; d->qpos[M.BaseQpos + 5] = 0; d->qpos[M.BaseQpos + 6] = Math.Sin(spawnYaw * 0.5);
     for (int i = 0; i < Nu; i++) { d->qpos[M.JointQpos[i]] = DefaultPose[i]; SetCtrl(d, i, DefaultPose[i]); }
     Array.Clear(_lastAction, 0, Nu);
     _cmd = Vector3.zero;
