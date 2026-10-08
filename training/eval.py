@@ -108,10 +108,10 @@ def run(rung, params, seeds):
       for k in range(int(8 / C.CTRL_DT)):
         if k == int(2 / C.CTRL_DT): sim.push(30.0, rng)
         if k == int(5 / C.CTRL_DT): sim.drop_cube(0)
-        if getattr(sim, "_push_steps", 0) > 0:
+        sim.control_step(cmd)
+        if getattr(sim, "_push_steps", 0) > 0:  # clear AFTER stepping: 25 physics steps = the full 30 N.s
           sim._push_steps -= C.DECIMATION
           if sim._push_steps <= 0: sim.d.xfrc_applied[:] = 0
-        sim.control_step(cmd)
         if k > int(2.5 / C.CTRL_DT): ok &= sim.upright()
       details.append(f"seed {seed}: {'survived' if ok else 'FELL'}")
     else:  # r3

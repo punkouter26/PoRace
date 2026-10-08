@@ -115,3 +115,11 @@ Passive-hold settled state in both engines: base z 0.2395 m, calf sag up to 0.26
 | R3 stand-up | 20/20 | 10/10 |
 
 Not yet verified: the combined fall -> getup -> resume walking sequence in one run (the cube and shove rarely knock the R2 policy over), and the 1.5 m/s from-standstill gap.
+
+## 2026-10-08 Tightening the ladder after review: three gaps found and closed, one reopened
+
+- **End-to-end recovery** (`eval.py --rung combo`, Unity `-comboTest`): walk, get flipped onto a fallen pose at 2 s, auto-switch to getup, switch back, walk again. 20/20 trainer, 10/10 Unity, back to walking ~1.5 s after the flip.
+- **R1 eval is now really randomized** (joint offsets, a 1.5 m/s command from standstill, four random commands per seed).
+- **Freeze on fast standstill starts:** from rest the policy tracks forward commands up to 1.2 m/s, braces and does not move for >= 1.3 m/s, but walks backward at 1.5 and reaches 1.41 when the command ramps. Noise or nudges do not break the freeze. Fix: a command slew limit `CMD_SLEW = 6` m/s^2 applied identically in eval, `record_reference.py` and `Go2Controller` (0.25 s to reach 1.5). With it R1 is 10/10, standstill-to-1.5 error 0.13. This is a controller-side fix, not a policy fix.
+- **True closed-loop parity:** Unity read gyro/linvel/orientation sensors in `ctrlCallback` (after `mj_step1`, fresh), while the trainer's observation uses `sensordata` left over from the start of the previous physics step (4 ms older). Unity now snapshots those sensors in `preUpdateEvent`. `ParityRecorder` and `zero_brain.py` both record after the 5th physics step of each action. Result: 5 s closed loop max |dqpos| 4.2e-4 at 0.5 m/s and 1.9e-6 at 1.5 m/s (was 0.8 rad of drift); speed, cadence and torque agree to 4 digits. Zero-brain still 4.5e-8.
+- **R2 reopened.** `eval.py` cleared the push force after 20 physics steps (24 N.s), Unity applied the full 30 N.s. With the eval fixed, the r2b policy scores 35/40 in the trainer and 17/20 in Unity: 87.5 %, below the 90 % bar. Root cause: training kicks peak at 0.318 * 15.2 kg * 3 m/s = 14.5 N.s, half the bar. `train.py --kick_max 7` (~34 N.s) added; run `runs/r2c` continues from r2b.

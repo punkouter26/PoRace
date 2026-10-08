@@ -62,12 +62,26 @@ public unsafe class Go2Controller : MonoBehaviour {
   void Awake() {
     Time.fixedDeltaTime = SimDt;  // MuJoCo plugin steps at Unity's fixed timestep; never trust the project setting alone
     MjScene.Instance.postInitEvent += OnSceneInit;
+    MjScene.Instance.preUpdateEvent += OnPreStep;
     MjScene.Instance.ctrlCallback += OnCtrl;
+  }
+
+  // Trainer convention: after mj_step, sensordata still holds the values computed at the START of that step, while
+  // qpos/qvel are post-integration. ctrlCallback runs after mj_step1, where sensordata is already refreshed, so the
+  // sensor part of the observation is snapshotted here (before mj_step1) to keep the same 4 ms sensor age.
+  readonly double[] _sens = new double[11];  // linvel 3, gyro 3, quat 4, upZ 1
+  void OnPreStep(object sender, MjStepArgs a) {
+    if (Model == null) return;
+    var d = a.data; var M = Model;
+    for (int i = 0; i < 3; i++) { _sens[i] = d->sensordata[M.LinvelAdr + i]; _sens[3 + i] = d->sensordata[M.GyroAdr + i]; }
+    for (int i = 0; i < 4; i++) _sens[6 + i] = d->sensordata[M.QuatAdr + i];
+    _sens[10] = d->sensordata[M.UpAdr + 2];
   }
 
   void OnDestroy() {
     if (!MjScene.InstanceExists) return;
     MjScene.Instance.postInitEvent -= OnSceneInit;
+    MjScene.Instance.preUpdateEvent -= OnPreStep;
     MjScene.Instance.ctrlCallback -= OnCtrl;
   }
 
@@ -126,7 +140,7 @@ public unsafe class Go2Controller : MonoBehaviour {
     if (_physicsStep++ % Decimation != 0) return;  // hold ctrl for 5 steps
     ControlStep++;
     var d = a.data; var M = Model;
-    double upZ = d->sensordata[M.UpAdr + 2];
+    double upZ = _sens[10];
     Upright = upZ > 0.0;  // upvector z, same as trainer termination
     if (upZ > 0.9) _uprightSince += SimDt * Decimation; else _uprightSince = 0f;
 
@@ -180,10 +194,10 @@ public unsafe class Go2Controller : MonoBehaviour {
   public void BuildObs(MujocoLib.mjData_* d, bool withLinvelAndCommand) {
     var M = Model;
     int k = 0;
-    if (withLinvelAndCommand) for (int i = 0; i < 3; i++) _obs[k++] = (float)d->sensordata[M.LinvelAdr + i];
-    for (int i = 0; i < 3; i++) _obs[k++] = (float)d->sensordata[M.GyroAdr + i];
+    if (withLinvelAndCommand) for (int i = 0; i < 3; i++) _obs[k++] = (float)_sens[i];
+    for (int i = 0; i < 3; i++) _obs[k++] = (float)_sens[3 + i];
     // Projected gravity: R_imu^T * (0,0,-1), from the imu site quaternion (w,x,y,z).
-    double w = d->sensordata[M.QuatAdr], x = d->sensordata[M.QuatAdr + 1], y = d->sensordata[M.QuatAdr + 2], z = d->sensordata[M.QuatAdr + 3];
+    double w = _sens[6], x = _sens[7], y = _sens[8], z = _sens[9];
     _obs[k++] = (float)(-2 * (x * z - w * y));
     _obs[k++] = (float)(-2 * (y * z + w * x));
     _obs[k++] = (float)(-(1 - 2 * (x * x + y * y)));

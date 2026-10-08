@@ -24,10 +24,10 @@ mujoco.mj_forward(m, d)
 d.ctrl[:] = np.array(C.DEFAULT_POSE, dtype=np.float32)  # ctrl is float32 in Unity (MjActuator.Control) and in Warp
 frames = []
 steps = int(round(SECONDS / m.opt.timestep))
-# Unity records in MjScene.postUpdateEvent, i.e. after mj_step of physics step i where i % 5 == 0.
+# Unity records in MjScene.postUpdateEvent, i.e. after mj_step of physics step i where i % 5 == 4 (the last step of each control interval).
 for i in range(steps + 1):
     mujoco.mj_step(m, d)
-    if i % C.DECIMATION == 0:
+    if i % C.DECIMATION == C.DECIMATION - 1:
         frames.append({"t": float(d.time), "qpos": d.qpos.tolist(), "qvel": d.qvel.tolist(), "ctrl": d.ctrl.tolist(),
                        "sensordata": d.sensordata.tolist()})
 PARITY_DIR.mkdir(parents=True, exist_ok=True)

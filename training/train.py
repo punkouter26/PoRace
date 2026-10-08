@@ -41,7 +41,7 @@ ENVS = {"joystick": (joystick.Joystick, joystick.default_config, "Go1JoystickFla
 CONTACTS_PER_ENV = 30  # full-collision Go2 lying on the floor; fewer drops contacts and bodies sink
 
 
-def make_env(name, pert=False, cubes=False, num_worlds=8192):
+def make_env(name, pert=False, cubes=False, num_worlds=8192, kick_max=None):
   cls, cfg_fn, _ = ENVS[name]
   cfg = cfg_fn()
   # naconmax is a TOTAL across worlds. Size it to the worlds this env instance really runs, otherwise the
@@ -50,6 +50,9 @@ def make_env(name, pert=False, cubes=False, num_worlds=8192):
   if name == "joystick":
     cfg.pert_config.enable = pert
     cfg.cube_config.enable = cubes
+    # Kick impulse = 0.318 * mass * velocity_kick (half-sine profile): the default 3 m/s is only ~14.5 N.s on the
+    # 15.2 kg Go2. The R2 bar is 30 N.s, which needs ~6.2 m/s; 7 gives margin.
+    if kick_max is not None: cfg.pert_config.velocity_kick = [0.0, float(kick_max)]
   return cls(config=cfg), cfg
 
 
@@ -61,14 +64,15 @@ def main():
   ap.add_argument("--seed", type=int, default=1)
   ap.add_argument("--logdir", default=None)
   ap.add_argument("--restore", default=None, help="checkpoint dir (latest step) or a specific step dir")
+  ap.add_argument("--kick_max", type=float, default=None, help="max velocity kick in m/s (impulse = 0.318*mass*kick)")
   ap.add_argument("--pert", action="store_true"); ap.add_argument("--cubes", action="store_true"); ap.add_argument("--dr", action="store_true")
   a = ap.parse_args()
 
   ppo_params = locomotion_params.brax_ppo_config(ENVS[a.env][2])
   if a.timesteps is not None: ppo_params.num_timesteps = a.timesteps
   if a.num_envs is not None: ppo_params.num_envs = a.num_envs
-  env, cfg = make_env(a.env, a.pert, a.cubes, num_worlds=ppo_params.num_envs)
-  eval_env, _ = make_env(a.env, a.pert, a.cubes, num_worlds=ppo_params.get("num_eval_envs", 128))
+  env, cfg = make_env(a.env, a.pert, a.cubes, num_worlds=ppo_params.num_envs, kick_max=a.kick_max)
+  eval_env, _ = make_env(a.env, a.pert, a.cubes, num_worlds=ppo_params.get("num_eval_envs", 128), kick_max=a.kick_max)
   logdir = Path(a.logdir or f"runs/{a.env}-{time.strftime('%Y%m%d-%H%M%S')}").resolve()
   ckpt = logdir / "checkpoints"; ckpt.mkdir(parents=True, exist_ok=True)
   (ckpt / "config.json").write_text(json.dumps(cfg.to_dict(), indent=1, default=str))

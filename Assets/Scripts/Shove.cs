@@ -17,7 +17,9 @@ public unsafe class Shove : MonoBehaviour {
   }
 
   /// <summary>Push in a MuJoCo-frame horizontal direction (unit vector).</summary>
+  public Vector3 LastDir { get; private set; }
   public void Push(Vector3 mjDir) {
+    LastDir = mjDir.normalized;
     _force = mjDir.normalized * (impulse / (durationSteps * Go2Controller.SimDt));
     _remaining = durationSteps;
   }

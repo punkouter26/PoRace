@@ -33,7 +33,7 @@ public unsafe class ParityRecorder : MonoBehaviour {
   void OnPostStep(object sender, MjStepArgs a) {
     if (_done || seconds <= 0f || controller == null || controller.Model == null) return;  // -seconds 0 = viewer mode, no recording
     // ctrlCallback ran inside this same step when _physicsStep % Decimation == 0; record after mj_step2.
-    if (_physicsStep++ % Go2Controller.Decimation != 0) return;
+    if (_physicsStep++ % Go2Controller.Decimation != Go2Controller.Decimation - 1) return;  // after the 5th step of each action, like the trainer
     var d = a.data; var M = controller.Model;
     M.CanonicalQpos(d, _qpos); M.CanonicalQvel(d, _qvel); M.CanonicalCtrl(d, _ctrl);
     var sb = new StringBuilder();

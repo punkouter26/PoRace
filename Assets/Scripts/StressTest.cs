@@ -12,7 +12,7 @@ public unsafe class StressTest : MonoBehaviour {
   public Shove shove;
   public CubePool cubes;
   bool _on, _pushed, _dropped, _done; bool _ok = true; double _minUp = 1;
-  bool _getupTest, _placed; double _upAt = -1;
+  bool _getupTest, _placed; double _upAt = -1, _fellAt = -1;
   static readonly float[] Lo = { -1.0472f, -1.5708f, -2.7227f }, Hi = { 1.0472f, 3.4907f, -0.83776f };
 
   void Awake() {
@@ -35,10 +35,10 @@ public unsafe class StressTest : MonoBehaviour {
     if (_combo) { ComboStep(a, t, up); return; }
     if (!_pushed && t >= 2.0) { shove.PushRandom(); _pushed = true; }
     if (!_dropped && t >= 5.0) { cubes.DropOnRobot(); _dropped = true; }
-    if (t > 2.5) { _minUp = Math.Min(_minUp, up); if (up <= 0) _ok = false; }
+    if (t > 2.5) { _minUp = Math.Min(_minUp, up); if (up <= 0 && _ok) { _ok = false; _fellAt = t; } }
     if (t >= 8.0) {
       _done = true;
-      Debug.Log($"[Stress] {(_ok ? "SURVIVED" : "FELL")} minUpZ={_minUp:F3} baseZ={a.data->qpos[controller.Model.BaseQpos + 2]:F3}");
+      Debug.Log($"[Stress] {(_ok ? "SURVIVED" : "FELL")} minUpZ={_minUp:F3} baseZ={a.data->qpos[controller.Model.BaseQpos + 2]:F3} fellAt={_fellAt:F2}s pushDir=({shove.LastDir.x:F2},{shove.LastDir.y:F2})");
       Application.Quit(_ok ? 0 : 1);
     }
   }
