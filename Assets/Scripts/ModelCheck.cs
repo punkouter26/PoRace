@@ -9,8 +9,9 @@ namespace PoRace {
 public static unsafe class ModelCheck {
   const double Eps = 1e-6;
 
-  public static void Assert(MujocoLib.mjModel_* m, Go2Model M) {
-    Check(m->nq == 47 && m->nv == 42 && m->nu == 12, $"sizes nq={m->nq} nv={m->nv} nu={m->nu}, want 47/42/12");
+  public static void Assert(MujocoLib.mjModel_* m, Go2Model M, int robots = 1) {
+    int nq = 19 * robots + 28, nv = 18 * robots + 24, nu = 12 * robots;  // + 4 pooled cubes
+    Check((int)m->nq == nq && (int)m->nv == nv && (int)m->nu == nu, $"sizes nq={m->nq} nv={m->nv} nu={m->nu}, want {nq}/{nv}/{nu} for {robots} robot(s)");
     Check(Math.Abs(m->opt.timestep - 0.004) < 1e-9, $"timestep {m->opt.timestep} != 0.004 (set Time.fixedDeltaTime)");
     Check(m->opt.integrator == (int)MujocoLib.mjtIntegrator.mjINT_EULER, "integrator != Euler");
     Check(m->opt.cone == (int)MujocoLib.mjtCone.mjCONE_PYRAMIDAL, "cone != pyramidal");
@@ -34,12 +35,12 @@ public static unsafe class ModelCheck {
       Check(Math.Abs(m->dof_damping[dof] - 0.5) < Eps && Math.Abs(m->dof_armature[dof] - 0.01) < Eps, $"dof damping/armature[{i}]");
     }
     foreach (var foot in Go2Model.Legs) {
-      int g = Go2Model.Id(m, MujocoLib.mjtObj.mjOBJ_GEOM, foot);
+      int g = Go2Model.Id(m, MujocoLib.mjtObj.mjOBJ_GEOM, M.Prefix + foot);
       Check(Math.Abs(m->geom_friction[g * 3] - 0.8) < Eps && m->geom_condim[g] == 6 && m->geom_priority[g] == 1, $"foot {foot} contact params");
     }
     int floor = Go2Model.Id(m, MujocoLib.mjtObj.mjOBJ_GEOM, "floor");
     Check(Math.Abs(m->geom_friction[floor * 3] - 0.6) < Eps && m->geom_condim[floor] == 3, "floor contact params");
-    Debug.Log($"[ModelCheck] OK nq={m->nq} nv={m->nv} nu={m->nu} mass={mass:F4} dt={m->opt.timestep} baseQpos={M.BaseQpos} jointQpos0={M.JointQpos[0]} cube0Qpos={M.CubeQpos[0]}");
+    Debug.Log($"[ModelCheck] OK {(M.Prefix == "" ? "" : M.Prefix + " ")}nq={m->nq} nv={m->nv} nu={m->nu} mass={mass:F4} dt={m->opt.timestep} baseQpos={M.BaseQpos} jointQpos0={M.JointQpos[0]} cube0Qpos={M.CubeQpos[0]}");
   }
 
   static void Check(bool ok, string msg) {

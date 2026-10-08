@@ -153,3 +153,13 @@ Caveats: walking from standstill at >= 1.3 m/s relies on the 6 m/s^2 command sle
 - Headless results (deterministic, identical on repeat): 100 m in 74.42 s, splits 17.79 / 36.30 / 54.88 / 74.42, average 1.34 m/s, 0 respawns. With `Go2Controller.KnockOver` at race time 20 s: getup, brain switch, resume; 75.67 s, 0 respawns (1.25 s lost).
 - Top speed is the limit: commanded 1.5, achieved about 1.35 on a long straight. Faster racing needs a policy trained on a wider command range.
 - `ResetToHome` now spawns at `spawnMj` / `spawnYaw`, which the orchestrator moves to the last checkpoint.
+
+## 2026-10-08 Four-dog race (no new training)
+
+- **One model, four robots.** `Track01x4.unity`: the imported robot subtree (base + actuators + sensors) is cloned three times inside the same `go2_scene`, every MuJoCo name prefixed `r1_`..`r3_`, so all racers and the rails live in one mjModel (nq 104, nv 96, nu 48). `Go2Model(prefix)`, `Go2Controller.prefix/multiRobot`, `ModelCheck(robots)`. In multi-robot scenes `ResetToHome` writes only that robot's qpos/qvel (no `mj_resetData`).
+- **Race:** `MultiRaceOrchestrator.cs`: countdown, per-racer lane steering through the joystick command, checkpoints every 25 m for respawn, live standings, pack-framing camera, robot-robot contact counter (from `mjData.contact`).
+- **First version produced zero bumps** (cruise 1.5/1.44/1.38/1.32 with lanes pinched to 45 %): the pack spread out before the pinch. Changed to closer speeds (1.47 / 1.41 / 1.44 / 1.50, fastest on the outside lanes) and a full merge to one line between 40 % and 60 % of the track.
+- **Result (headless, identical on repeat):** Gold 74.22 s, Blue 76.02, Green 76.85, Red 78.22; 162 contact episodes, 8.11 s in contact, 0 respawns. The policies were never trained against another robot; the push/cube robustness carried over.
+- **Flip the leader at 30 s:** it was run into by the pack, did not get up within the 6 s limit, was respawned at its checkpoint and finished last (97.75 s). Alone on the track the same flip costs 1.25 s. Getting up inside a crowd is not something the getup policy was trained for.
+- **Performance, measured:** 0.394 ms per physics step for four racers including inference = 1.97 ms per 50 Hz control step (budget 5.0). Worst single step 6.7 to 15 ms (occasional spikes, probably GC/first-use).
+- **Regression after the refactor:** zero-brain 4.47e-8, replay 7.75e-7, 1.5 m/s closed loop 6.74e-6, stress 5/5, combo 5/5, single race 74.42 s: all identical to before. `NoPhysXTest` 2/2 across Testbed, Race, Track01, Track01x4.

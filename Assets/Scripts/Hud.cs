@@ -47,8 +47,9 @@ public class Hud : MonoBehaviour {
   }
 
   public RaceOrchestrator race;
-  public void OnReset() { if (race != null) race.Restart(); else controller.ResetToHome(); }
-  public void OnShove() => shove.PushRandom();
+  public MultiRaceOrchestrator multiRace;
+  public void OnReset() { if (multiRace != null) multiRace.Restart(); else if (race != null) race.Restart(); else controller.ResetToHome(); }
+  public void OnShove() { if (multiRace != null) shove.target = multiRace.Leader().controller; shove.PushRandom(); }
   public void OnCube() => cubes.ThrowAtRobot();
   public void OnDrop() => cubes.DropOnRobot();
   public void OnMode(int m) => controller.mode = (Go2Mode)m;
@@ -59,7 +60,7 @@ public class Hud : MonoBehaviour {
   public void OnWalk() => Go(new Vector3(1.0f, 0f, 0f));
   public void OnRun() => Go(new Vector3(1.5f, 0f, 0f));
   public void OnTurn() => Go(new Vector3(0.6f, 0f, 0.8f));
-  public void OnKnockOver() => controller.KnockOver();
+  public void OnKnockOver() { if (multiRace != null) multiRace.Leader().controller.KnockOver(); else controller.KnockOver(); }
 }
 
 }

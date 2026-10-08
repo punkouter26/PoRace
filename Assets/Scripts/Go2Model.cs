@@ -37,14 +37,16 @@ public unsafe sealed class Go2Model {
     throw new InvalidOperationException($"body {body} has no free joint");
   }
 
-  public Go2Model(MujocoLib.mjModel_* m) {
-    BaseBody = Id(m, MujocoLib.mjtObj.mjOBJ_BODY, "base");
+  public readonly string Prefix;
+  public Go2Model(MujocoLib.mjModel_* m, string prefix = "") {
+    Prefix = prefix ?? "";
+    BaseBody = Id(m, MujocoLib.mjtObj.mjOBJ_BODY, Prefix + "base");
     int bj = FreeJointOf(m, BaseBody);
     BaseQpos = m->jnt_qposadr[bj]; BaseDof = m->jnt_dofadr[bj];
     for (int i = 0; i < Nu; i++) {
-      int j = Id(m, MujocoLib.mjtObj.mjOBJ_JOINT, JointNames[i]);
+      int j = Id(m, MujocoLib.mjtObj.mjOBJ_JOINT, Prefix + JointNames[i]);
       JointQpos[i] = m->jnt_qposadr[j]; JointDof[i] = m->jnt_dofadr[j];
-      ActId[i] = Id(m, MujocoLib.mjtObj.mjOBJ_ACTUATOR, ActuatorNames[i]);
+      ActId[i] = Id(m, MujocoLib.mjtObj.mjOBJ_ACTUATOR, Prefix + ActuatorNames[i]);
       if (m->actuator_trnid[ActId[i] * 2] != j) throw new InvalidOperationException($"actuator {ActuatorNames[i]} does not drive {JointNames[i]}");
     }
     for (int k = 0; k < NumCubes; k++) {
@@ -52,10 +54,10 @@ public unsafe sealed class Go2Model {
       int j = FreeJointOf(m, CubeBody[k]);
       CubeQpos[k] = m->jnt_qposadr[j]; CubeDof[k] = m->jnt_dofadr[j];
     }
-    GyroAdr = m->sensor_adr[Id(m, MujocoLib.mjtObj.mjOBJ_SENSOR, "gyro")];
-    LinvelAdr = m->sensor_adr[Id(m, MujocoLib.mjtObj.mjOBJ_SENSOR, "local_linvel")];
-    QuatAdr = m->sensor_adr[Id(m, MujocoLib.mjtObj.mjOBJ_SENSOR, "orientation")];
-    UpAdr = m->sensor_adr[Id(m, MujocoLib.mjtObj.mjOBJ_SENSOR, "upvector")];
+    GyroAdr = m->sensor_adr[Id(m, MujocoLib.mjtObj.mjOBJ_SENSOR, Prefix + "gyro")];
+    LinvelAdr = m->sensor_adr[Id(m, MujocoLib.mjtObj.mjOBJ_SENSOR, Prefix + "local_linvel")];
+    QuatAdr = m->sensor_adr[Id(m, MujocoLib.mjtObj.mjOBJ_SENSOR, Prefix + "orientation")];
+    UpAdr = m->sensor_adr[Id(m, MujocoLib.mjtObj.mjOBJ_SENSOR, Prefix + "upvector")];
   }
 
   /// <summary>qpos in canonical order: base 7, joints 12, cubes 4x7 (= training/go2/constants.py layout).</summary>

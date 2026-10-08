@@ -31,6 +31,10 @@ public unsafe class Go2Controller : MonoBehaviour {
   [Tooltip("vx (m/s), vy (m/s), yaw rate (rad/s)")]
   public Vector3 command = Vector3.zero;
   public bool autoGetup = true;
+  [Tooltip("MuJoCo name prefix of this robot's bodies/joints/actuators/sensors (\"\" for the first, \"r1_\" ... for clones).")]
+  public string prefix = "";
+  [Tooltip("True when several robots share the MuJoCo model: resets then touch only this robot's state.")]
+  public bool multiRobot = false;
   [Tooltip("Where ResetToHome puts the robot, MuJoCo frame (x, y, z up) and heading about z. A race moves this to the last checkpoint.")]
   public Vector3 spawnMj = new Vector3(0f, 0f, HomeHeight);
   public float spawnYaw = 0f;
@@ -111,8 +115,8 @@ public unsafe class Go2Controller : MonoBehaviour {
     // Plugin does not parse these two; the trainer runs with them. See rl_optimization_log.md.
     m->opt.ls_iterations = 5;
     m->opt.disableflags |= (int)MujocoLib.mjtDisableBit.mjDSBL_EULERDAMP;
-    Model = new Go2Model(m);
-    ModelCheck.Assert(m, Model);
+    Model = new Go2Model(m, prefix);
+    ModelCheck.Assert(m, Model, multiRobot ? FindObjectsByType<Go2Controller>(FindObjectsSortMode.None).Length : 1);
     m->opt.ccd_iterations = 35;
     foreach (var act in FindObjectsByType<MjActuator>(FindObjectsSortMode.None))
       for (int i = 0; i < Nu; i++) if (act.MujocoId == Model.ActId[i]) _act[i] = act;
@@ -128,14 +132,16 @@ public unsafe class Go2Controller : MonoBehaviour {
 
   void ResetToHome(MujocoLib.mjModel_* m, MujocoLib.mjData_* d) {
     var M = Model;
-    MujocoLib.mj_resetData(m, d);
+    if (!multiRobot) MujocoLib.mj_resetData(m, d);  // single robot: full reset (also zeroes sim time, used by the parity harness)
+    else { for (int i = 0; i < 6; i++) d->qvel[M.BaseDof + i] = 0; for (int i = 0; i < Nu; i++) d->qvel[M.JointDof[i]] = 0; }
     d->qpos[M.BaseQpos] = spawnMj.x; d->qpos[M.BaseQpos + 1] = spawnMj.y; d->qpos[M.BaseQpos + 2] = spawnMj.z;
     d->qpos[M.BaseQpos + 3] = Math.Cos(spawnYaw * 0.5); d->qpos[M.BaseQpos + 4] = 0; d->qpos[M.BaseQpos + 5] = 0; d->qpos[M.BaseQpos + 6] = Math.Sin(spawnYaw * 0.5);
     for (int i = 0; i < Nu; i++) { d->qpos[M.JointQpos[i]] = DefaultPose[i]; SetCtrl(d, i, DefaultPose[i]); }
     Array.Clear(_lastAction, 0, Nu);
     _cmd = Vector3.zero;
     _physicsStep = 0; ControlStep = 0;
-    CubePool.Instance?.ParkAll(M, d);
+    if (!multiRobot) CubePool.Instance?.ParkAll(M, d);
+    _uprightSince = 0f; _holdUntil = -1; Active = mode; _requested = mode;
     MujocoLib.mj_forward(m, d);
   }
 
@@ -185,6 +191,10 @@ public unsafe class Go2Controller : MonoBehaviour {
     LastInferenceMs = (float)((Time.realtimeSinceStartupAsDouble - t0) * 1000.0);
     if (action != null) Array.Copy(action, _lastAction, Nu); else Array.Clear(_lastAction, 0, Nu);
   }
+
+  Transform _baseTr;
+  /// <summary>Unity transform of this robot's base body (kept in sync by the MuJoCo plugin); for cameras and UI.</summary>
+  public Transform BaseTransform { get { if (_baseTr == null) { var go = GameObject.Find(prefix + "base"); if (go != null) _baseTr = go.transform; } return _baseTr; } }
 
   /// <summary>Gameplay: flip the robot onto its back in place (state write only, no scene change) to demo recovery.</summary>
   public void KnockOver() {

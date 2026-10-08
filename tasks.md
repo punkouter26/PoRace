@@ -71,7 +71,7 @@ Mark `[x]` when done. Each task is one commit.
 - [x] F.1 `Assets/Scenes/Track01.unity`: 100 m straight corridor; side rails are native MuJoCo world geoms (MjGeom boxes); track surface, start/finish lines, distance markers and finish arch are visual-only meshes (no colliders).
 - [x] F.2 `RaceOrchestrator.cs`: 3 s countdown, waypoint steering through the joystick command (vx = cruise, yaw rate from heading error), split times at 25/50/75 m, finish line, checkpoint respawn, Restart button.
 - [x] F.3 Headless race tests: `PoRace.exe -batchmode -nographics -raceTest -timeScale 4 [-raceFlipAt 20]`. Plain 74.42 s (1.34 m/s, 0 respawns); flipped at 20 s: 75.67 s.
-- [ ] F.4 Four racers on the track with bump contacts and standings (PRD 4.2); confirms the 5 ms budget for real.
+- [x] F.4 Four racers: `Assets/Scenes/Track01x4.unity` + `MultiRaceOrchestrator.cs`. Four Go2s in ONE MuJoCo model (robot subtree cloned in-editor with `r1_`..`r3_` name prefixes), each with its own policies; lanes merge to a single line mid-track. Headless `-raceTest`: all finish (74.2 / 76.0 / 76.9 / 78.2 s), 162 robot-robot contact episodes (8.1 s), 0 respawns; 1.97 ms per control step measured (budget 5.0).
 - [ ] F.5 MapDefinition asset + Map 02 (banked oval) to exercise steering through corners.
 
 ## Phase E: Later (tracked, not scheduled)
