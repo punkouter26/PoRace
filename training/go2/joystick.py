@@ -33,7 +33,7 @@ def default_config() -> config_dict.ConfigDict:
                                      kick_wait_times=[1.0, 3.0]),
       cube_config=config_dict.create(enable=False, wait_times=[1.0, 3.0], drop_height=1.0, xy_jitter=0.15),
       command_config=config_dict.create(a=[1.5, 0.8, 1.2], b=[0.9, 0.25, 0.5]),
-      impl="warp", naconmax=30 * 8192, njmax=128,  # full-collision model: a fallen dog has ~25 contacts; 4-8/env (go1 feet-only) drops contacts and bodies sink through the floor
+      impl="warp", naconmax=20 * 8192, njmax=128,  # full-collision model: a fallen dog has ~25 contacts; 4-8/env (go1 feet-only) drops contacts and bodies sink through the floor
   )
 
 
