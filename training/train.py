@@ -73,7 +73,7 @@ def main():
   if a.restore:
     p = Path(a.restore)
     steps = sorted([d for d in p.iterdir() if d.is_dir() and d.name.isdigit()], key=lambda d: int(d.name)) if p.is_dir() else []
-    restore = str(steps[-1] if steps else p)
+    restore = str((steps[-1] if steps else p).resolve())  # orbax requires an absolute path
     print("restoring from", restore)
 
   training_params = dict(ppo_params)
