@@ -38,9 +38,15 @@ ENVS = {"joystick": (joystick.Joystick, joystick.default_config, "Go1JoystickFla
         "getup": (getup.Getup, getup.default_config, "Go1Getup")}
 
 
-def make_env(name, pert=False, cubes=False):
+CONTACTS_PER_ENV = 30  # full-collision Go2 lying on the floor; fewer drops contacts and bodies sink
+
+
+def make_env(name, pert=False, cubes=False, num_worlds=8192):
   cls, cfg_fn, _ = ENVS[name]
   cfg = cfg_fn()
+  # naconmax is a TOTAL across worlds. Size it to the worlds this env instance really runs, otherwise the
+  # 128-world eval env allocates the same buffers as the training env and the 12 GB GPU spills or OOMs.
+  cfg.naconmax = CONTACTS_PER_ENV * num_worlds
   if name == "joystick":
     cfg.pert_config.enable = pert
     cfg.cube_config.enable = cubes
@@ -58,11 +64,11 @@ def main():
   ap.add_argument("--pert", action="store_true"); ap.add_argument("--cubes", action="store_true"); ap.add_argument("--dr", action="store_true")
   a = ap.parse_args()
 
-  env, cfg = make_env(a.env, a.pert, a.cubes)
-  eval_env, _ = make_env(a.env, a.pert, a.cubes)
   ppo_params = locomotion_params.brax_ppo_config(ENVS[a.env][2])
   if a.timesteps is not None: ppo_params.num_timesteps = a.timesteps
   if a.num_envs is not None: ppo_params.num_envs = a.num_envs
+  env, cfg = make_env(a.env, a.pert, a.cubes, num_worlds=ppo_params.num_envs)
+  eval_env, _ = make_env(a.env, a.pert, a.cubes, num_worlds=ppo_params.get("num_eval_envs", 128))
   logdir = Path(a.logdir or f"runs/{a.env}-{time.strftime('%Y%m%d-%H%M%S')}").resolve()
   ckpt = logdir / "checkpoints"; ckpt.mkdir(parents=True, exist_ok=True)
   (ckpt / "config.json").write_text(json.dumps(cfg.to_dict(), indent=1, default=str))
