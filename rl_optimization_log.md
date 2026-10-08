@@ -60,3 +60,11 @@ Passive-hold settled state in both engines: base z 0.2395 m, calf sag up to 0.26
 - Root cause (`training/nan_probe.py`): the Warp solver (iterations=1, ls_iterations=5, full-collision body geoms) occasionally blows a fallen env up to NaN, about 1 env per 4096 x 170 random-action steps. The termination test `upvector_z < 0` is False on NaN, so the env never reset and fed NaN into the running observation statistics, which then made every obs NaN.
 - Fix: joystick/getup `step` now terminates on any NaN in qpos/qvel, zeroes the reward, `nan_to_num`s obs and metrics, and logs `nan_resets`; the brax autoreset wrapper then swaps the env back to its reset state (`where_done` on data/obs/info). Verified by injecting NaN: done=1, obs finite, nan_resets=1. Unity `AutoReset` has the same guard (NaN base state -> home keyframe).
 - Lesson: watch `training/policy_loss` for NaN in the first 5 evals of every run; a healthy-looking tracking curve is not proof.
+
+## 2026-10-07 Rung 1 attempt 2 FAILED: contacts dropped, dogs sink through the floor (relaunched as attempt 3)
+
+- Same NaN signature at the 22M eval, but `nan_resets` = 0: the physics never went NaN. The obs normalizer std had grown to 1e6 and base/joint positions to 1e5: bodies were falling without end. NaN ctrl from the dead policy is clamped by ctrlrange, which is why physics looked finite and tracking "improved".
+- Root cause: `naconmax = 8 * 8192` (go1 feet-only sizing, 4-8 contacts per env). The full-collision Go2 lying on the floor has ~25 contacts; early in training most envs are fallen, the budget overflows, Warp drops contacts, the dog falls through the floor, and `upvector_z < 0` never fires.
+- Fix: joystick `naconmax = 30 * 8192` (the go1 getup value), `blown_up()` guard in base.py (NaN, |qvel| > 500, |base pos| > 100 m) terminates such envs, obs are `nan_to_num` + clipped to ±100. Probe with the new budget: max|obs| 41, min base z 0.16 over 300 wrapped random-action steps (before: velocities to 285 and positions to 1e5).
+- Side effect: the larger budget needs more GPU memory; the probe OOM'd at 4096 envs with the viewer open. Attempt 3 runs with 8192 envs and memory is being watched; fallback is 20 * 8192.
+- `eval/episode_nan_resets` is now also the dropped-contact detector: it must stay 0.
