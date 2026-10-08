@@ -82,3 +82,12 @@ Passive-hold settled state in both engines: base z 0.2395 m, calf sag up to 0.26
 
 - The stall is fixed: evals arrive every ~14 min (23M steps), GPU memory steady at 5.4 GB, `nan_resets` 0. Per-instance `naconmax = 30 * num_worlds` confirmed (the eval env no longer allocates training-size buffers). Launch via `--init --log-driver none --name porace-r1`.
 - Reward 17.2 -> 18.2 -> 18.8 over the first 46M resumed steps. `diag_r1.py` on the 46M checkpoint: turns on command (0.85 of 1.0 rad/s) but stands still for every linear command, mean error 0.56 (bar 0.2). Reward terms: pose saturated (453), tracking_lin_vel rising slowly 277 -> 288 -> 307 of ~1000, swing peak and feet slip rising, so it is beginning to step. Decision: let the 200M run finish before changing rewards.
+
+## 2026-10-08 Rung 0 / Rung 1 PASSED, Unity parity gate PASSED (runs/r1b, 23M + 206M steps)
+
+- Reward 17.2 -> 26.2 over the resumed 206M steps (2 h 10 min at 4096 envs). Walking emerged between 69M and 138M.
+- `eval.py`: R0 10/10, R1 10/10 (mean velocity error 0.092, bar 0.2). The eval is deterministic, so the 10 seeds are identical runs; they add no evidence beyond one. Known gap: from a standstill the policy ignores a 1.5 m/s command (it reaches 1.5 when already walking at 1.0).
+- Unity gate (`Assets/Policies/r1.onnx`): replay worst |da| 9.24e-7 over 250 frames; closed loop 5 s at 0.5 m/s PASS: mean vx 0.428 vs 0.433, cadence 1.71 vs 1.81 Hz, mean |torque| 4.13 vs 3.66 N.m, upright both.
+- First closed-loop attempt FAILED and was caught by `ModelCheck`: Unity fixed timestep had reverted to 0.02 after the reboot (it was only set in the live editor, never saved). Now `ProjectSettings/TimeManager.asset` has 0.004 and `Go2Controller.Awake` sets `Time.fixedDeltaTime` itself.
+- After a reboot the editor needs Unity Hub running for its license; `unity open` hangs otherwise.
+- Rung 2 (`runs/r2`: --pert --cubes --dr from the r1b policy) launched in parallel with the gate.

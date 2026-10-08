@@ -46,6 +46,7 @@ public unsafe class Go2Controller : MonoBehaviour {
   float _uprightSince;
 
   void Awake() {
+    Time.fixedDeltaTime = SimDt;  // MuJoCo plugin steps at Unity's fixed timestep; never trust the project setting alone
     MjScene.Instance.postInitEvent += OnSceneInit;
     MjScene.Instance.ctrlCallback += OnCtrl;
   }
