@@ -10,6 +10,6 @@ WORKDIR /work
 COPY pyproject.toml ./
 RUN uv sync --no-install-project --python 3.12
 # mujoco_playground clones menagerie on first import; bake it in so training runs offline and pinned.
-RUN M=$(/venv/bin/python -c "from mujoco_playground._src import mjx_env; print(mjx_env.MENAGERIE_PATH)") && S=$(/venv/bin/python -c "from mujoco_playground._src import mjx_env; print(mjx_env.MENAGERIE_COMMIT_SHA)") \n    && git clone -q https://github.com/google-deepmind/mujoco_menagerie.git "$M" && git -C "$M" checkout -q "$S" && rm -rf "$M/.git"
+RUN M=$(/venv/bin/python -c "from mujoco_playground._src import mjx_env; print(mjx_env.MENAGERIE_PATH)") && S=$(/venv/bin/python -c "from mujoco_playground._src import mjx_env; print(mjx_env.MENAGERIE_COMMIT_SHA)") && mkdir -p "$(dirname "$M")" && git clone -q https://github.com/google-deepmind/mujoco_menagerie.git "$M" && git -C "$M" checkout -q "$S" && rm -rf "$M/.git"
 ENV PATH=/venv/bin:$PATH MUJOCO_GL=egl XLA_PYTHON_CLIENT_PREALLOCATE=false
 CMD ["bash"]

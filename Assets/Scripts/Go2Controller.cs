@@ -12,7 +12,7 @@ public enum Go2Mode { HoldHome, Locomotion, Getup }
 /// from MjScene.ctrlCallback, which fires between mj_step1 and mj_step2 exactly like the trainer.
 /// Joint order and obs layout: docs/joint_order.md. All model indices come from Go2Model (by name).
 /// </summary>
-public unsafe class Go2Controller : MonoBehaviour {
+public unsafe class Go2Controller : MonoBehaviour, IParitySource {
   // ---- contract (training/go2/constants.py) ----
   public const float SimDt = 0.004f;
   public const int Decimation = 5;
@@ -40,6 +40,11 @@ public unsafe class Go2Controller : MonoBehaviour {
   public float spawnYaw = 0f;
 
   public Go2Model Model { get; private set; }
+  // IParitySource: canonical order = base, 12 joints, then the 4 pooled cubes (training/go2/constants.py layout).
+  public bool Ready => Model != null;
+  int IParitySource.Decimation => Decimation;
+  public int Nq => 47; public int Nv => 42; int IParitySource.Nu => Nu;
+  public void Canonical(MujocoLib.mjData_* d, double[] qpos, double[] qvel, double[] ctrl) { Model.CanonicalQpos(d, qpos); Model.CanonicalQvel(d, qvel); Model.CanonicalCtrl(d, ctrl); }
   public bool Upright { get; private set; } = true;
   public int ControlStep { get; private set; }
   public float LastInferenceMs { get; private set; }

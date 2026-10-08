@@ -10,13 +10,13 @@ namespace PoRace {
 /// <summary>Records canonical-order qpos/qvel/ctrl plus obs/action every control step for `seconds`, then writes
 /// docs/parity/<fileName>. training/zero_brain.py and training/compare_trajectory.py read it.</summary>
 public unsafe class ParityRecorder : MonoBehaviour {
-  public Go2Controller controller;
+  public MonoBehaviour controller;   // any IParitySource (Go2Controller, G1Controller)
   public float seconds = 2f;
   public string fileName = "unity_zero_brain.json";
   public bool quitWhenDone = false;
 
   readonly List<string> _frames = new();
-  readonly double[] _qpos = new double[47], _qvel = new double[42], _ctrl = new double[12];
+  double[] _qpos, _qvel, _ctrl;
   int _physicsStep;
   bool _done;
 
@@ -31,15 +31,17 @@ public unsafe class ParityRecorder : MonoBehaviour {
   void OnDestroy() { if (MjScene.InstanceExists) MjScene.Instance.postUpdateEvent -= OnPostStep; }
 
   void OnPostStep(object sender, MjStepArgs a) {
-    if (_done || seconds <= 0f || controller == null || controller.Model == null) return;  // -seconds 0 = viewer mode, no recording
-    // ctrlCallback ran inside this same step when _physicsStep % Decimation == 0; record after mj_step2.
-    if (_physicsStep++ % Go2Controller.Decimation != Go2Controller.Decimation - 1) return;  // after the 5th step of each action, like the trainer
-    var d = a.data; var M = controller.Model;
-    M.CanonicalQpos(d, _qpos); M.CanonicalQvel(d, _qvel); M.CanonicalCtrl(d, _ctrl);
+    var src = controller as IParitySource;
+    if (_done || seconds <= 0f || src == null || !src.Ready) return;  // -seconds 0 = viewer mode, no recording
+    // Record after the last physics step of each control interval, like the trainer.
+    if (_physicsStep++ % src.Decimation != src.Decimation - 1) return;
+    var d = a.data;
+    if (_qpos == null) { _qpos = new double[src.Nq]; _qvel = new double[src.Nv]; _ctrl = new double[src.Nu]; }
+    src.Canonical(d, _qpos, _qvel, _ctrl);
     var sb = new StringBuilder();
     sb.Append("{\"t\":").Append(d->time.ToString("R", CultureInfo.InvariantCulture));
     Append(sb, "qpos", _qpos); Append(sb, "qvel", _qvel); Append(sb, "ctrl", _ctrl);
-    Append(sb, "obs", controller.CurrentObs); Append(sb, "action", controller.LastAction);
+    Append(sb, "obs", src.CurrentObs); Append(sb, "action", src.LastAction);
     sb.Append('}');
     _frames.Add(sb.ToString());
     if (d->time >= seconds) Finish();
