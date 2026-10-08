@@ -31,8 +31,9 @@ def unpack_params(params):
   keys = sorted(p.keys(), key=lambda k: int(k.split("_")[1]))
   layers = [(np.asarray(p[k]["kernel"], np.float32), np.asarray(p[k]["bias"], np.float32)) for k in keys]
   w, b = layers[-1]
-  assert w.shape[1] == 2 * C.NU, w.shape  # NormalTanhDistribution: [mean, logstd]
-  layers[-1] = (w[:, : C.NU], b[: C.NU])
+  assert w.shape[1] % 2 == 0, w.shape  # NormalTanhDistribution: [mean, logstd]; action size = half (12 for Go2, 29 for G1)
+  nu = w.shape[1] // 2
+  layers[-1] = (w[:, :nu], b[:nu])
   return mean, std, layers
 
 
@@ -87,7 +88,7 @@ if __name__ == "__main__":
     from brax.io import model as brax_model
     params = brax_model.load_params(a.params)
     mean, std, layers = unpack_params(params)
-    model = build_graph(layers, len(mean), C.NU, "go2_policy", mean, std)
+    model = build_graph(layers, len(mean), layers[-1][0].shape[1], "policy", mean, std)
     name, ref = Path(a.params).parent.name + ".onnx", policy_from_params(params)
   OUT_DIR.mkdir(parents=True, exist_ok=True)
   out = Path(a.out) if a.out else OUT_DIR / name
@@ -99,9 +100,9 @@ if __name__ == "__main__":
   for _ in range(1000):
     x = np.random.randn(1, obs_dim).astype(np.float32)
     y = sess.run(None, {"obs": x})[0]
-    assert y.shape == (1, C.NU)
+    assert y.shape[0] == 1
     if ref is not None:
       worst = max(worst, float(np.abs(y[0] - ref(x[0])).max()))
     else:
       assert np.all(y == 0)
-  print(f"OK {out} obs={obs_dim} act={C.NU} opset=17 onnx-vs-numpy worst {worst:.2e}")
+  print(f"OK {out} obs={obs_dim} act={y.shape[1]} opset=17 onnx-vs-numpy worst {worst:.2e}")
