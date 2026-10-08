@@ -12,6 +12,9 @@ namespace PoRace {
 /// </summary>
 public class ReplayHarness : MonoBehaviour {
   public Go2Controller controller;
+  [Tooltip("Other creatures: set the policy and its sizes here instead of a Go2Controller.")]
+  public Unity.InferenceEngine.ModelAsset model;
+  public int obsDim = Go2Controller.ObsJoystick, actDim = Go2Controller.Nu;
   public float tolerance = 1e-4f;
 
   void Start() {
@@ -19,12 +22,12 @@ public class ReplayHarness : MonoBehaviour {
     string path = null;
     for (int i = 0; i + 1 < args.Length; i++) if (args[i] == "-replay") path = args[i + 1];
     if (path == null) return;
-    int code = Run(path, controller.locomotionModel, Go2Controller.ObsJoystick) ? 0 : 1;
+    int code = Run(path, model != null ? model : controller.locomotionModel, obsDim) ? 0 : 1;
     Application.Quit(code);
   }
 
   public bool Run(string path, Unity.InferenceEngine.ModelAsset asset, int obsDim) {
-    using var policy = new PolicyRunner(asset, obsDim, Go2Controller.Nu);
+    using var policy = new PolicyRunner(asset, obsDim, actDim);
     var text = File.ReadAllText(path);
     int n = 0; float worst = 0f; int worstFrame = -1;
     int pos = 0;
@@ -33,7 +36,7 @@ public class ReplayHarness : MonoBehaviour {
       var act = NextArray(text, "\"action\"", ref pos); if (act == null) break;
       if (obs.Length != obsDim) { Debug.LogError($"[Replay] frame {n}: obs {obs.Length} != {obsDim}"); return false; }
       var y = policy.Run(obs, obsDim);
-      for (int i = 0; i < Go2Controller.Nu; i++) {
+      for (int i = 0; i < actDim; i++) {
         float d = Mathf.Abs(y[i] - act[i]);
         if (d > worst) { worst = d; worstFrame = n; }
       }
