@@ -98,3 +98,20 @@ Passive-hold settled state in both engines: base z 0.2395 m, calf sag up to 0.26
 - Baseline R1 policy on the R2 bar: 7/10. R2 checkpoint 46M: 9/10. Checkpoint 92M: 18/20 (bar 90 %), R1 error 0.091, R0 pass. Reward had plateaued, so the run was stopped there and `checkpoints/000091750400` kept as `runs/r2/params.pkl`. The margin over the bar is zero; more R2 training is the first thing to do if a larger sample dips below 90 %.
 - Unity spot-check (`StressTest.cs`, `PoRace.exe -stress -stressSeed N`): 30 N.s shove at 2 s + pooled cube dropped from 1 m at 5 s, 10 seeds: 9/10 survived in the MuJoCo plugin.
 - `--init` works: `docker stop porace-r2` returned cleanly.
+
+## 2026-10-08 Rung 3 PASSED; behaviour ladder complete
+
+- `train.py --env getup --num_envs 4096` (52M steps, 28 min): reward 1.0 -> 5.2 -> 10.0 -> 11.2 -> 15.9. At 26M only some starts recovered; the last interval made the difference.
+- `eval.py --rung r3 --seeds 20`: 20/20 standing within 3 s (slowest 2.18 s).
+- Unity (`PoRace.exe -getupTest -stressSeed N -mode Getup`, random orientation at 0.5 m, random joint angles, 0.5 s hold): 10/10, slowest 2.22 s.
+- `Go2Controller` now has a real state machine for the switch (`Active`): Locomotion -> Getup when upvector z < 0, back only after 0.5 s with z > 0.9. The earlier version had no hysteresis.
+- Final Testbed build: locomotion `r2.onnx` + getup `r3_getup.onnx`, autoGetup on.
+
+| Rung | Trainer (CPU MuJoCo) | Unity (MuJoCo plugin) |
+|---|---|---|
+| R0 stand | 10/10 | covered by closed-loop gate |
+| R1 walk + turn | 10/10, err 0.092 (identical deterministic runs) | replay 9.2e-7, closed loop PASS |
+| R2 push + cube | 18/20 | 9/10 |
+| R3 stand-up | 20/20 | 10/10 |
+
+Not yet verified: the combined fall -> getup -> resume walking sequence in one run (the cube and shove rarely knock the R2 policy over), and the 1.5 m/s from-standstill gap.

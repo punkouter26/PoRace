@@ -12,19 +12,25 @@ public unsafe class StressTest : MonoBehaviour {
   public Shove shove;
   public CubePool cubes;
   bool _on, _pushed, _dropped, _done; bool _ok = true; double _minUp = 1;
+  bool _getupTest, _placed; double _upAt = -1;
+  static readonly float[] Lo = { -1.0472f, -1.5708f, -2.7227f }, Hi = { 1.0472f, 3.4907f, -0.83776f };
 
   void Awake() {
     var args = Environment.GetCommandLineArgs();
     for (int i = 0; i < args.Length; i++) {
       if (args[i] == "-stress") _on = true;
+      if (args[i] == "-getupTest") { _on = true; _getupTest = true; }
       if (args[i] == "-stressSeed" && i + 1 < args.Length) UnityEngine.Random.InitState(int.Parse(args[i + 1]));
     }
-    if (_on) MjScene.Instance.postUpdateEvent += OnPostStep;
+    if (!_on) return;
+    var ar = controller.GetComponent<AutoReset>(); if (ar != null) ar.enabled = false;  // a reset would fake a recovery
+    MjScene.Instance.postUpdateEvent += OnPostStep;
   }
 
   void OnPostStep(object sender, MjStepArgs a) {
     if (_done || controller.Model == null) return;
     double t = a.data->time; double up = a.data->sensordata[controller.Model.UpAdr + 2];
+    if (_getupTest) { GetupStep(a, t, up); return; }
     if (!_pushed && t >= 2.0) { shove.PushRandom(); _pushed = true; }
     if (!_dropped && t >= 5.0) { cubes.DropOnRobot(); _dropped = true; }
     if (t > 2.5) { _minUp = Math.Min(_minUp, up); if (up <= 0) _ok = false; }
@@ -34,6 +40,33 @@ public unsafe class StressTest : MonoBehaviour {
       Application.Quit(_ok ? 0 : 1);
     }
   }
+
+  /// <summary>R3 in engine, same as training/eval.py r3: random orientation at 0.5 m with random joint angles,
+  /// hold for 0.5 s, then the policy must be upright with base above 0.22 m within 3 s and still up at 5 s.</summary>
+  void GetupStep(MjStepArgs a, double t, double up) {
+    var d = a.data; var M = controller.Model;
+    if (!_placed) {
+      _placed = true;
+      var q = UnityEngine.Random.rotationUniform;
+      d->qpos[M.BaseQpos] = 0; d->qpos[M.BaseQpos + 1] = 0; d->qpos[M.BaseQpos + 2] = 0.5;
+      d->qpos[M.BaseQpos + 3] = q.w; d->qpos[M.BaseQpos + 4] = q.x; d->qpos[M.BaseQpos + 5] = q.y; d->qpos[M.BaseQpos + 6] = q.z;
+      for (int i = 0; i < 12; i++) d->qpos[M.JointQpos[i]] = UnityEngine.Random.Range(Lo[i % 3], Hi[i % 3]);
+      for (int i = 0; i < 6; i++) d->qvel[M.BaseDof + i] = 0;
+      for (int i = 0; i < 12; i++) d->qvel[M.JointDof[i]] = 0;
+      controller.HoldCurrentPose(d, t + 0.5);
+      MujocoLib.mj_forward(a.model, d);
+      _t0 = t + 0.5; return;
+    }
+    double z = d->qpos[M.BaseQpos + 2];
+    if (t > _t0 && _upAt < 0 && up > 0 && z > 0.22) _upAt = t - _t0;
+    if (t >= _t0 + 5.0) {
+      _done = true;
+      bool ok = _upAt >= 0 && _upAt <= 3.0 && up > 0;
+      Debug.Log($"[Getup] {(ok ? "PASS" : "FAIL")} upAt={_upAt:F2}s finalUpZ={up:F3} baseZ={z:F3} active={controller.Active}");
+      Application.Quit(ok ? 0 : 1);
+    }
+  }
+  double _t0;
 }
 
 }

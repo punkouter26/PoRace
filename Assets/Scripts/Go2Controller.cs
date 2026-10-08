@@ -38,6 +38,17 @@ public unsafe class Go2Controller : MonoBehaviour {
   public float[] LastAction => _lastAction;
   public float[] CurrentObs => _obs;
 
+  /// <summary>Policy actually driving the joints this step (differs from `mode` while auto-recovering).</summary>
+  public Go2Mode Active { get; private set; } = Go2Mode.HoldHome;
+  Go2Mode _requested = (Go2Mode)(-1);
+  double _holdUntil = -1; readonly float[] _holdTargets = new float[Nu];
+
+  /// <summary>Hold the current joint angles as PD targets until sim time `until` (used after teleporting the robot).</summary>
+  public void HoldCurrentPose(MujocoLib.mjData_* d, double until) {
+    for (int i = 0; i < Nu; i++) { _holdTargets[i] = (float)d->qpos[Model.JointQpos[i]]; SetCtrl(d, i, _holdTargets[i]); }
+    _holdUntil = until;
+  }
+
   PolicyRunner _loco, _getup;
   readonly MjActuator[] _act = new MjActuator[Nu];  // MjActuator.OnSyncState rewrites ctrl from .Control after every step
   readonly float[] _obs = new float[ObsJoystick];
@@ -111,12 +122,23 @@ public unsafe class Go2Controller : MonoBehaviour {
     if (_physicsStep++ % Decimation != 0) return;  // hold ctrl for 5 steps
     ControlStep++;
     var d = a.data; var M = Model;
-    Upright = d->sensordata[M.UpAdr + 2] > 0.0;  // upvector z, same as trainer termination
-    if (Upright) _uprightSince += SimDt * Decimation; else _uprightSince = 0f;
+    double upZ = d->sensordata[M.UpAdr + 2];
+    Upright = upZ > 0.0;  // upvector z, same as trainer termination
+    if (upZ > 0.9) _uprightSince += SimDt * Decimation; else _uprightSince = 0f;
 
-    var active = mode;
-    if (autoGetup && _getup != null && active == Go2Mode.Locomotion && !Upright) active = Go2Mode.Getup;
-    if (autoGetup && _loco != null && active == Go2Mode.Getup && _uprightSince > 0.5f) active = Go2Mode.Locomotion;
+    if (d->time < _holdUntil) {  // settle phase (trainer getup reset holds ctrl = qpos for 0.5 s)
+      for (int i = 0; i < Nu; i++) SetCtrl(d, i, _holdTargets[i]);
+      Array.Clear(_lastAction, 0, Nu);
+      return;
+    }
+
+    // Behaviour switch with hysteresis: fall -> Getup; back to Locomotion only after 0.5 s solidly upright.
+    if (mode != _requested) { _requested = mode; Active = mode; }
+    if (autoGetup && _getup != null && _loco != null && _requested == Go2Mode.Locomotion) {
+      if (Active == Go2Mode.Locomotion && !Upright) { Active = Go2Mode.Getup; Array.Clear(_lastAction, 0, Nu); }
+      else if (Active == Go2Mode.Getup && _uprightSince > 0.5f) { Active = Go2Mode.Locomotion; Array.Clear(_lastAction, 0, Nu); }
+    }
+    var active = Active;
 
     float[] action;
     var t0 = Time.realtimeSinceStartupAsDouble;

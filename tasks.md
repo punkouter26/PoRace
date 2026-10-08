@@ -56,9 +56,9 @@ Mark `[x]` when done. Each task is one commit.
 - [x] C.13 Unity spot-check: fire pool cubes and shove in the testbed, dog survives. Log.
 
 ### Rung 3
-- [ ] C.14 Train getup policy (drops + fallen poses, settle 0.5 s). Eval: standing within 3 s, 9/10 seeds. Export ONNX.
-- [ ] C.15 Mode switch in `Go2Controller.cs`: locomotion <-> getup on projected-gravity z sign with 0.5 s upright hysteresis. Spot-check: knock it over with cubes, it gets up and resumes walking.
-- [ ] C.16 Commit tag `ladder-complete`.
+- [x] C.14 Train getup policy (drops + fallen poses, settle 0.5 s). Eval: standing within 3 s, 9/10 seeds. Export ONNX.
+- [x] C.15 Mode switch in `Go2Controller.cs`: locomotion <-> getup on projected-gravity z sign with 0.5 s upright hysteresis. Spot-check: knock it over with cubes, it gets up and resumes walking.
+- [x] C.16 Commit tag `ladder-complete`.
 
 ## Phase D: Engine Polish & Game Loop (Step 5)
 - [ ] D.1 Author `Race.unity` via Unity MCP in-editor (no procedural scene code): 9:16 camera rig, ground, HUD anchors, behaviour selector wired to command presets (stand / walk / turn / getup demo).

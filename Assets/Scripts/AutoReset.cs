@@ -22,7 +22,7 @@ public unsafe class AutoReset : MonoBehaviour {
   void OnDestroy() { if (MjScene.InstanceExists) MjScene.Instance.postUpdateEvent -= OnPostStep; }
 
   void OnPostStep(object sender, MjStepArgs a) {
-    var M = controller.Model; if (M == null) return;
+    var M = controller.Model; if (M == null || !enabled) return;
     var d = a.data;
     float dt = Go2Controller.SimDt;
     double upZ = d->sensordata[M.UpAdr + 2];
