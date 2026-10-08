@@ -8,9 +8,9 @@ Mark `[x]` when done. Each task is one commit.
 ## Phase 0: Repo & Toolchain
 - [x] 0.1 `git init`, Unity .gitignore, commit the template project as-is.
 - [x] 0.2 Trainer runs in Docker (no JAX CUDA wheels on native Windows): `training/Dockerfile` + pinned `training/pyproject.toml`. Build `porace-trainer` image.
-- [ ] 0.3 Smoke test: import mujoco_playground and run the stock Go1 joystick env for 10 steps on Warp. Record GPU, driver, versions in `rl_optimization_log.md`.
+- [x] 0.3 Smoke test: import mujoco_playground and run the stock Go1 joystick env for 10 steps on Warp. Record GPU, driver, versions in `rl_optimization_log.md`.
 - [x] 0.4 Install org.mujoco into Unity from the mujoco release (`unity/` package + mujoco.dll). Install com.unity.ai.inference. Commit `Packages/manifest.json`.
-- [ ] 0.5 Restart / verify Unity MCP connection (failed this session). Needed for Phase B scene authoring.
+- [x] 0.5 (superseded: the editor is driven through the Unity CLI pipeline instead of Unity MCP) Restart / verify Unity MCP connection. Needed for Phase B scene authoring.
 
 ## Phase A: Rig & Physics Body Derivation
 - [x] A.1 Copy menagerie `unitree_go2/` (go2_mjx.xml + assets/*.obj) into `training/assets/go2/`. Record menagerie commit hash.
