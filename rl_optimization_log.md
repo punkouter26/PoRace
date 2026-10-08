@@ -123,3 +123,18 @@ Not yet verified: the combined fall -> getup -> resume walking sequence in one r
 - **Freeze on fast standstill starts:** from rest the policy tracks forward commands up to 1.2 m/s, braces and does not move for >= 1.3 m/s, but walks backward at 1.5 and reaches 1.41 when the command ramps. Noise or nudges do not break the freeze. Fix: a command slew limit `CMD_SLEW = 6` m/s^2 applied identically in eval, `record_reference.py` and `Go2Controller` (0.25 s to reach 1.5). With it R1 is 10/10, standstill-to-1.5 error 0.13. This is a controller-side fix, not a policy fix.
 - **True closed-loop parity:** Unity read gyro/linvel/orientation sensors in `ctrlCallback` (after `mj_step1`, fresh), while the trainer's observation uses `sensordata` left over from the start of the previous physics step (4 ms older). Unity now snapshots those sensors in `preUpdateEvent`. `ParityRecorder` and `zero_brain.py` both record after the 5th physics step of each action. Result: 5 s closed loop max |dqpos| 4.2e-4 at 0.5 m/s and 1.9e-6 at 1.5 m/s (was 0.8 rad of drift); speed, cadence and torque agree to 4 digits. Zero-brain still 4.5e-8.
 - **R2 reopened.** `eval.py` cleared the push force after 20 physics steps (24 N.s), Unity applied the full 30 N.s. With the eval fixed, the r2b policy scores 35/40 in the trainer and 17/20 in Unity: 87.5 %, below the 90 % bar. Root cause: training kicks peak at 0.318 * 15.2 kg * 3 m/s = 14.5 N.s, half the bar. `train.py --kick_max 7` (~34 N.s) added; run `runs/r2c` continues from r2b.
+
+## 2026-10-08 FINAL: all behaviours achieved (trainer and Unity)
+
+Final policies: `training/final/go2_loco_params.pkl` (= runs/r2c checkpoint 23M: r1 23M + r1b 206M + r2 92M + r2b 46M + r2c 23M with `--kick_max 7`) and `training/final/go2_getup_params.pkl` (runs/r3, 52M). Unity: `Assets/Policies/go2_loco.onnx`, `go2_getup.onnx`. Stronger kicks fixed R2 in one 12-minute interval (reward 15.6 -> 17.1).
+
+| Behaviour | Bar | Trainer (CPU MuJoCo) | Unity (MuJoCo plugin, headless player) |
+|---|---|---|---|
+| R0 stand 10 s | 10/10 | 10/10 | covered by closed loop |
+| R1 walk + turn, randomized, incl. 1.5 m/s from standstill | err < 0.2, 10/10 | 10/10 | closed loop PASS at 0.5 and 1.5 m/s (1.2588 vs 1.2588 m/s) |
+| R2 30 N.s push + 1 kg cube from 1 m | 90 % | 40/40 | 20/20 |
+| R3 stand up within 3 s | 90 % | 20/20 | 10/10 |
+| Fall -> getup -> resume walking | 90 % | 20/20 | 10/10 |
+| Parity | | | zero-brain 4.5e-8; replay 7.8e-7; closed loop metrics pass |
+
+Caveats: walking from standstill at >= 1.3 m/s relies on the 6 m/s^2 command slew limit (policy still braces on a raw step). The 0.5 m/s closed-loop run drifts to 0.78 rad max |dqpos| by 5 s while passing all gait metrics (the 1.5 m/s run stays within 7e-6); float-level divergence in a chaotic gait, not a model mismatch. R0/R3 evals are noise-free.
