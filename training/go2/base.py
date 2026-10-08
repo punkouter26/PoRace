@@ -40,6 +40,15 @@ class Go2Env(mjx_env.MjxEnv):
   def get_feet_pos(self, data):
     return jp.vstack([mjx_env.get_sensor_data(self.mj_model, data, s) for s in C.FEET_POS_SENSOR])
 
+  def blown_up(self, data) -> jax.Array:
+    """NaN, runaway velocity, or a body that escaped the arena (e.g. fell through a dropped floor contact)."""
+    return (jp.isnan(data.qpos).any() | jp.isnan(data.qvel).any()
+            | (jp.abs(data.qvel[:C.NV_ROBOT]).max() > 500.0) | (jp.abs(data.qpos[:3]).max() > 100.0))
+
+  @staticmethod
+  def clean_obs(obs):
+    return jax.tree_util.tree_map(lambda o: jp.clip(jp.nan_to_num(o), -100.0, 100.0), obs)
+
   def noisy(self, info, x, scale):
     info["rng"], k = jax.random.split(info["rng"])
     return x + (2 * jax.random.uniform(k, shape=x.shape) - 1) * self._config.noise_config.level * scale

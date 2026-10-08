@@ -33,7 +33,7 @@ def default_config() -> config_dict.ConfigDict:
                                      kick_wait_times=[1.0, 3.0]),
       cube_config=config_dict.create(enable=False, wait_times=[1.0, 3.0], drop_height=1.0, xy_jitter=0.15),
       command_config=config_dict.create(a=[1.5, 0.8, 1.2], b=[0.9, 0.25, 0.5]),
-      impl="warp", naconmax=8 * 8192, njmax=128,  # 4 feet x 10 rows (condim 6 pyramidal) + cubes + body geoms; 40 drops the cubes through the floor
+      impl="warp", naconmax=30 * 8192, njmax=128,  # full-collision model: a fallen dog has ~25 contacts; 4-8/env (go1 feet-only) drops contacts and bodies sink through the floor
   )
 
 
@@ -140,9 +140,9 @@ class Joystick(Go2Env):
     reward = jp.clip(sum(rewards.values()) * self.dt, 0.0, 10000.0)
     # Solver blow-ups (iterations=1) leave NaN in a few envs per 1e6 steps; a NaN fall check never terminates and
     # poisons the obs normalizer. Terminate + sanitize so the autoreset wrapper swaps the env back to its reset state.
-    bad = jp.isnan(data.qpos).any() | jp.isnan(data.qvel).any()
+    bad = self.blown_up(data)
     done = done | bad
-    obs = jax.tree_util.tree_map(jp.nan_to_num, obs)
+    obs = self.clean_obs(obs)
     reward = jp.where(bad, 0.0, reward)
     rewards = {k: jp.nan_to_num(v) for k, v in rewards.items()}
 

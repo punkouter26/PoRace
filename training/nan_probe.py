@@ -50,7 +50,7 @@ def main():
       print("  reward terms nan:", [t for t, v in s.metrics.items() if bool(jp.isnan(v[i]))])
       print("  max |qvel| over batch:", float(jp.nanmax(jp.abs(s.data.qvel))), " done frac:", float(s.done.mean()))
     if k % 50 == 0:
-      print(f"step {k}: nan envs obs/qpos/reward {n}, max|qvel| {float(jp.nanmax(jp.abs(s.data.qvel))):.1f}, done {float(s.done.mean()):.3f}", flush=True)
+      print(f"step {k}: nan envs obs/qpos/reward {n}, max|qvel| {float(jp.nanmax(jp.abs(s.data.qvel))):.1f}, max|obs| {float(jp.nanmax(jp.abs(s.obs['state']))):.1f}, min base z {float(jp.nanmin(s.data.qpos[:, 2])):.2f}, done {float(s.done.mean()):.3f}", flush=True)
   print(f"done {a.steps} steps x {a.envs} envs in {time.time()-t0:.0f}s; first NaN step = {first}; nan_resets total = {nan_resets}")
 
 

@@ -76,9 +76,9 @@ class Getup(Go2Env):
     rewards = self._get_reward(data, action, state.info)
     rewards = {k: v * self._config.reward_config.scales[k] for k, v in rewards.items()}
     reward = jp.clip(sum(rewards.values()) * self.dt, 0.0, 10000.0)
-    bad = jp.isnan(data.qpos).any() | jp.isnan(data.qvel).any()  # see joystick.py
+    bad = self.blown_up(data)  # see joystick.py
     done = done | bad
-    obs = jax.tree_util.tree_map(jp.nan_to_num, obs)
+    obs = self.clean_obs(obs)
     reward = jp.where(bad, 0.0, reward)
     rewards = {k: jp.nan_to_num(v) for k, v in rewards.items()}
     state.metrics["nan_resets"] = bad.astype(jp.float32)
