@@ -91,3 +91,10 @@ Passive-hold settled state in both engines: base z 0.2395 m, calf sag up to 0.26
 - First closed-loop attempt FAILED and was caught by `ModelCheck`: Unity fixed timestep had reverted to 0.02 after the reboot (it was only set in the live editor, never saved). Now `ProjectSettings/TimeManager.asset` has 0.004 and `Go2Controller.Awake` sets `Time.fixedDeltaTime` itself.
 - After a reboot the editor needs Unity Hub running for its license; `unity open` hangs otherwise.
 - Rung 2 (`runs/r2`: --pert --cubes --dr from the r1b policy) launched in parallel with the gate.
+
+## 2026-10-08 Rung 2 PASSED (runs/r2, stopped at 92M of 200M)
+
+- `train.py --pert --cubes --dr --restore runs/r1b/checkpoints`: reward 17.8 -> 21.0 -> 20.8 -> 21.7 -> 21.6 (lower than R1 by design: kicks up to 3 m/s, falling 1 kg cubes, randomized mass/friction/gains).
+- Baseline R1 policy on the R2 bar: 7/10. R2 checkpoint 46M: 9/10. Checkpoint 92M: 18/20 (bar 90 %), R1 error 0.091, R0 pass. Reward had plateaued, so the run was stopped there and `checkpoints/000091750400` kept as `runs/r2/params.pkl`. The margin over the bar is zero; more R2 training is the first thing to do if a larger sample dips below 90 %.
+- Unity spot-check (`StressTest.cs`, `PoRace.exe -stress -stressSeed N`): 30 N.s shove at 2 s + pooled cube dropped from 1 m at 5 s, 10 seeds: 9/10 survived in the MuJoCo plugin.
+- `--init` works: `docker stop porace-r2` returned cleanly.

@@ -51,9 +51,9 @@ Mark `[x]` when done. Each task is one commit.
 - [x] C.10 Commit tag `rung1-parity-pass`.
 
 ### Rung 2
-- [ ] C.11 Continue from R1 checkpoint with kicks, cubes, and DR on.
-- [ ] C.12 Eval R2: 30 N.s push and 1 kg cube hit, 9/10 seeds. Export ONNX.
-- [ ] C.13 Unity spot-check: fire pool cubes and shove in the testbed, dog survives. Log.
+- [x] C.11 Continue from R1 checkpoint with kicks, cubes, and DR on.
+- [x] C.12 Eval R2: 30 N.s push and 1 kg cube hit, 9/10 seeds. Export ONNX.
+- [x] C.13 Unity spot-check: fire pool cubes and shove in the testbed, dog survives. Log.
 
 ### Rung 3
 - [ ] C.14 Train getup policy (drops + fallen poses, settle 0.5 s). Eval: standing within 3 s, 9/10 seeds. Export ONNX.
