@@ -1,33 +1,37 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>PoRace training report</title>
 <style>
-:root{--bg:#fff;--fg:#111827;--muted:#6b7280;--line:#e5e7eb;--pass:#dcfce7;--card:#f9fafb;--warn:#fef3c7}
-@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0f172a;--fg:#e5e7eb;--muted:#9ca3af;--line:#334155;--pass:#14532d;--card:#1e293b;--warn:#78350f}}
-body{margin:0;padding:16px;font:16px/1.5 system-ui,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--fg);max-width:1100px;margin-inline:auto}
+:root{--bg:#fff;--fg:#111827;--muted:#6b7280;--line:#e5e7eb;--pass:#dcfce7;--fail:#fee2e2;--na:#f3f4f6;--pend:#fef3c7;--card:#f9fafb}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0f172a;--fg:#e5e7eb;--muted:#9ca3af;--line:#334155;--pass:#14532d;--fail:#7f1d1d;--na:#1e293b;--pend:#78350f;--card:#1e293b}}
+body{margin:0;padding:16px;font:16px/1.5 system-ui,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--fg);max-width:1180px;margin-inline:auto}
 h1{font-size:1.6rem;margin:.2em 0} h2{font-size:1.2rem;margin-top:2em;border-bottom:1px solid var(--line);padding-bottom:.3em} h3{font-size:1rem;margin:.2em 0 .4em}
-.muted{color:var(--muted)} .banner{background:var(--pass);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin:12px 0} .warn{background:var(--warn)}
-table.grid{border-collapse:collapse;width:100%;font-size:.95rem} table.grid th,table.grid td{border:1px solid var(--line);padding:9px;vertical-align:top;text-align:left}
-table.grid small{display:block;font-weight:normal;color:var(--muted)} .agent{width:44%} .c{text-align:center} .pass{background:var(--pass)}
+.muted{color:var(--muted)} .banner{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin:12px 0} .warn{background:var(--pend)}
+.scroll{overflow-x:auto} table.grid{border-collapse:collapse;width:100%;min-width:900px;font-size:.9rem} table.grid th,table.grid td{border:1px solid var(--line);padding:8px;vertical-align:top;text-align:left}
+table.grid small{display:block;font-weight:normal;color:var(--muted)} .agent{width:21%} .c{text-align:center}
+.pass{background:var(--pass)} .fail{background:var(--fail)} .na{background:var(--na);color:var(--muted)} .pend{background:var(--pend)}
+.key span{display:inline-block;padding:2px 10px;border-radius:6px;margin-right:8px;font-size:.85rem;border:1px solid var(--line)}
 .chart{width:100%;height:auto;background:var(--card);border:1px solid var(--line);border-radius:10px;display:block}
 .ct{font-size:14px;font-weight:600;fill:var(--fg)} .tick{font-size:11px;fill:var(--muted)} .gl{stroke:var(--line);stroke-width:1}
-.ann{stroke:#f59e0b;stroke-width:1.5} .annt{font-size:11.5px;fill:#b45309;font-weight:600} .bar{stroke:#16a34a;stroke-dasharray:5 4}
+.ann{stroke:#f59e0b;stroke-width:1.5} .annt{font-size:11.5px;fill:#b45309;font-weight:600} .bar{stroke:#16a34a;stroke-width:2;stroke-dasharray:5 4}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start} @media(max-width:820px){.row{grid-template-columns:1fr}}
-.tlw{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px} .tl{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:.92rem}
-.tl b{display:block} .tl .s{color:var(--muted);font-size:.85rem;display:block} .legend span{display:inline-block;margin-right:14px;font-size:.85rem} .sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+table.small{border-collapse:collapse;width:100%;font-size:.92rem} table.small td,table.small th{border:1px solid var(--line);padding:7px 9px;text-align:left}
+.legend span{display:inline-block;margin-right:14px;font-size:.85rem} .sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
 code{background:var(--card);padding:1px 5px;border-radius:4px;font-size:.9em}
 </style></head><body>
-<h1>PoRace: Go2 training report</h1>
-<div class="muted">Generated 2026-10-08 08:44. One creature: the Unitree Go2 robot dog, trained in MuJoCo Warp and played back in Unity through the native MuJoCo plugin (no Unity physics).</div>
-<div class="banner"><b>All behaviours are achieved.</b> The dog stands, walks and turns on command up to 1.5 m/s, survives hard shoves and falling cubes, and gets back up and carries on after being flipped over. Every result below was measured in the training simulator and again inside Unity.</div>
+<h1>PoRace: training report</h1>
+<div class="muted">Generated 2026-10-08 11:50. Two creatures: the Unitree Go2 robot dog (racing now) and the Unitree G1 humanoid (body ready, not yet trained). Trained in MuJoCo Warp, played in Unity through the native MuJoCo plugin.</div>
+<div class="banner"><b>In one paragraph.</b> The dog has two brains that work: one to stand, walk, turn and take hits, one to get back up. Together they race four-at-a-time on two tracks. What it cannot do yet is <b>run</b>: it tops out around 1.3 to 1.5 m/s. The first attempt to teach running backfired and was thrown away; a corrected second attempt is training now. The humanoid's body is in Unity and matches the training simulator, but it has no brain yet.</div>
 
-<h2>What the dog can do</h2>
-<table class="grid"><thead><tr><th>Behaviour and pass bar</th><th>Training simulator</th><th>Inside Unity</th></tr></thead><tbody><tr><th class="agent">Stand still<small>Upright 10 s, no command</small></th><td class="c pass">10 / 10</td><td class="c pass">covered by closed-loop runs</td></tr><tr><th class="agent">Walk and turn<small>Random speed and turn commands incl. 1.5 m/s from a stop; mean error under 0.2 m/s</small></th><td class="c pass">10 / 10<br><small>error 0.10&ndash;0.12 m/s</small></td><td class="c pass">matches trainer<br><small>1.2588 vs 1.2588 m/s at the 1.5 command</small></td></tr><tr><th class="agent">Take a hit<small>30 N·s shove while walking, then a 1 kg cube dropped from 1 m; stay on its feet 90 % of the time</small></th><td class="c pass">40 / 40</td><td class="c pass">20 / 20</td></tr><tr><th class="agent">Stand up<small>From a random fallen pose, standing within 3 s, 90 % of the time</small></th><td class="c pass">20 / 20<br><small>slowest 2.2 s</small></td><td class="c pass">10 / 10</td></tr><tr><th class="agent">Fall, get up, carry on<small>Flipped onto its back mid-walk; switches to the stand-up brain, then back, and is walking again</small></th><td class="c pass">20 / 20</td><td class="c pass">10 / 10<br><small>walking again after about 1.5 s</small></td></tr></tbody></table>
-<p class="muted">Two brains: a locomotion brain (stand, walk, turn, take hits) and a stand-up brain. Unity runs physics at 250 Hz and the brain at 50 Hz, the same as training. Cost per racer: about 0.9 ms per control step, so roughly 3.6 ms estimated for four racers against a 5 ms budget.</p>
+<h2>Agents and what each can do</h2>
+<div class="key"><span class="pass">passes its bar</span><span class="fail">does not</span><span class="pend">in training</span><span class="na">not applicable / not trained</span></div>
+<div class="scroll"><table class="grid"><thead><tr><th>Agent</th><th>Stand</th><th>Walk and turn<small>random commands, error under 0.2 m/s</small></th><th>Take a hit<small>30 N·s shove + falling 1 kg cube</small></th><th>Stand up<small>from fallen, within 3 s</small></th><th>Run fast<small>above 1.5 m/s</small></th><th>Same in Unity as in training</th></tr></thead><tbody><tr><th class="agent">Go2 walking brain<small>In the game now. 389M training steps.</small></th><td class="c pass">10 / 10</td><td class="c pass">10 / 10<small>error 0.10&ndash;0.12 m/s</small></td><td class="c pass">40 / 40<small>Unity 20 / 20</small></td><td class="c na">uses stand-up brain</td><td class="c fail">1.3&ndash;1.5 m/s<small>refuses 2.5+</small></td><td class="c pass">matches Unity<small>0.000001 rad</small></td></tr><tr><th class="agent">Go2 stand-up brain<small>In the game now. 52M steps. Takes over when the dog is down.</small></th><td class="c na">&ndash;</td><td class="c na">&ndash;</td><td class="c pass">19 / 20<small>shoved while rising</small></td><td class="c pass">20 / 20<small>Unity 10 / 10, slowest 2.2 s</small></td><td class="c na">&ndash;</td><td class="c pass">Unity 10 / 10</td></tr><tr><th class="agent">Go2 + both brains together<small>The actual racer: walk, fall, get up, carry on.</small></th><td class="c pass">10 / 10</td><td class="c pass">10 / 10</td><td class="c pass">40 / 40</td><td class="c pass">20 / 20<small>back walking in ~1.5 s</small></td><td class="c fail">1.3&ndash;1.5 m/s</td><td class="c pass">Unity 10 / 10</td></tr><tr><th class="agent">Go2 run brain, attempt 1<small>Stopped at 46M steps and discarded.</small></th><td class="c pass">yes</td><td class="c fail">only up to 1.0 m/s</td><td class="c na">not tested</td><td class="c na">&ndash;</td><td class="c fail">refuses 1.5 and above<small>worse than before</small></td><td class="c na">not gated</td></tr><tr><th class="agent">Go2 run brain, attempt 2<small>Training now with corrected scoring. Target 2.5 m/s.</small></th><td class="c pend">training</td><td class="c pend">training</td><td class="c pend">training</td><td class="c na">&ndash;</td><td class="c pend">no result yet</td><td class="c na">not gated</td></tr><tr><th class="agent">G1 humanoid<small>Second creature. Body verified in Unity; no brain trained yet.</small></th><td class="c na">no brain yet</td><td class="c na">no brain yet</td><td class="c na">no brain yet</td><td class="c na">not planned yet</td><td class="c na">no brain yet</td><td class="c pass">body matches Unity<small>0.0000009 rad, no brain</small></td></tr></tbody></table></div>
+<p class="muted">Scores are "passes out of attempts" in the training simulator unless marked Unity. "Same in Unity" means the Unity game reproduces the simulator: for the walking brain a 5-second run at 1.5 m/s stays within a millionth of a radian in every joint.</p>
 
-<h2>The three charts that tell the story</h2>
-<div class="legend muted"><span><i class="sw" style="background:#2563eb"></i>learning to walk</span><span><i class="sw" style="background:#d97706"></i>pushes, cubes, random physics</span><span><i class="sw" style="background:#dc2626"></i>pushes doubled</span><span><i class="sw" style="background:#059669"></i>stand-up brain</span></div>
+<h2>The three training charts that matter most</h2>
+<p class="muted">These are the TensorBoard curves (<code>eval/episode_reward</code> and <code>eval/episode_reward/tracking_lin_vel</code>), redrawn from the same logged numbers so they can carry notes. Each dot is a test of 128 simulated dogs. Open the live versions with TensorBoard on <code>training/runs</code>.</p>
+<div class="legend muted"><span><i class="sw" style="background:#2563eb"></i>learning to walk</span><span><i class="sw" style="background:#d97706"></i>pushes, cubes, random physics</span><span><i class="sw" style="background:#dc2626"></i>pushes doubled / failed run attempt</span><span><i class="sw" style="background:#7c3aed"></i>run attempt 2</span></div>
 <div class="row">
-<div><h3>1. Overall score</h3><svg viewBox="0 0 680 320" class="chart" role="img" aria-label="Locomotion brain: score per 20-second test episode"><text x="62" y="20" class="ct">Locomotion brain: score per 20-second test episode</text>
+<div><h3>1. Overall score of the walking brain</h3><svg viewBox="0 0 680 320" class="chart" role="img" aria-label="Walking brain: score per 20-second test"><text x="62" y="20" class="ct">Walking brain: score per 20-second test</text>
 <rect x="62.0" y="46" width="34.2" height="232" fill="#2563eb" opacity="0.11"/>
 <rect x="96.2" y="46" width="307.4" height="232" fill="#2563eb" opacity="0.06"/>
 <rect x="403.5" y="46" width="136.6" height="232" fill="#d97706" opacity="0.11"/>
@@ -76,9 +80,9 @@ code{background:var(--card);padding:1px 5px;border-radius:4px;font-size:.9em}
 <line x1="62.0" y1="277.5" x2="76.0" y2="251.5" class="ann"/><text x="80.0" y="255.5" class="annt" text-anchor="start">random brain: falls at once</text>
 <line x1="232.8" y1="100.4" x2="216.8" y2="66.4" class="ann"/><text x="212.8" y="70.4" class="annt" text-anchor="end">starts walking</text>
 <line x1="403.5" y1="140.0" x2="389.5" y2="178.0" class="ann"/><text x="385.5" y="182.0" class="annt" text-anchor="end">harder test begins: score drops</text>
-<line x1="642.6" y1="145.4" x2="630.6" y2="105.4" class="ann"/><text x="626.6" y="109.4" class="annt" text-anchor="end">final brain</text>
-</svg><p>The dog's report-card grade for one 20-second test: points for moving at the commanded speed and staying level, minus points for shaking, wasting energy or falling. It sat near 18 while it only balanced, climbed to 26 once it learned to walk, then <b>dropped on purpose</b> each time the test was made harder (shoves and cubes, then shoves twice as strong). A lower score on a harder test is not a worse dog.</p></div>
-<div><h3>2. Following the speed command</h3><svg viewBox="0 0 680 320" class="chart" role="img" aria-label="How closely it follows the speed command (about 1000 = perfect)"><text x="62" y="20" class="ct">How closely it follows the speed command (about 1000 = perfect)</text>
+<line x1="642.6" y1="145.4" x2="630.6" y2="105.4" class="ann"/><text x="626.6" y="109.4" class="annt" text-anchor="end">brain in the game today</text>
+</svg><p>Think of it as a report-card grade for one 20-second test: points for moving at the speed asked and staying level, minus points for shaking, wasting energy or falling. It sat near 18 while the dog only balanced, climbed to 26 once it learned to walk, then <b>dropped on purpose</b> each time the test got harder (shoves and cubes, then shoves twice as strong). A lower score on a harder test is not a worse dog; the last red dot is the brain racing today.</p></div>
+<div><h3>2. Does it go the speed it is told?</h3><svg viewBox="0 0 680 320" class="chart" role="img" aria-label="How closely it follows the speed command (about 1000 = perfect)"><text x="62" y="20" class="ct">How closely it follows the speed command (about 1000 = perfect)</text>
 <rect x="62.0" y="46" width="34.2" height="232" fill="#2563eb" opacity="0.11"/>
 <rect x="96.2" y="46" width="307.4" height="232" fill="#2563eb" opacity="0.06"/>
 <rect x="403.5" y="46" width="136.6" height="232" fill="#d97706" opacity="0.11"/>
@@ -123,8 +127,31 @@ code{background:var(--card);padding:1px 5px;border-radius:4px;font-size:.9em}
 <circle cx="608.4" cy="144.0" r="3.5" fill="#dc2626"/>
 <circle cx="642.6" cy="123.8" r="3.5" fill="#dc2626"/>
 <line x1="96.2" y1="213.7" x2="110.2" y2="247.7" class="ann"/><text x="114.2" y="251.7" class="annt" text-anchor="start">balancing only, not walking yet</text>
-</svg><p>How close the dog's real speed is to the joystick command, added up over the episode. For the first 70 million steps it stayed low: the dog had found a lazy answer, standing still and only turning. Then walking "clicked" and this is the curve that shows it. It dips again when it also has to cope with being shoved.</p></div>
-<div><h3>3. Learning to stand up</h3><svg viewBox="0 0 680 320" class="chart" role="img" aria-label="Stand-up brain: score per 6-second episode (about 20 = perfect)"><text x="62" y="20" class="ct">Stand-up brain: score per 6-second episode (about 20 = perfect)</text>
+</svg><p>How close the dog's real speed is to the joystick command, added up over the test. For the first 70 million steps it stayed low because the dog had found a lazy answer: stand still and only turn. Then walking "clicked", and this is the curve that shows it. It dips when it also has to survive being shoved.</p></div>
+<div><h3>3. Teaching it to run</h3><svg viewBox="0 0 680 320" class="chart" role="img" aria-label="Teaching it to run: two attempts"><text x="62" y="20" class="ct">Teaching it to run: two attempts</text>
+<rect x="62.0" y="46" width="580.6" height="232" fill="#6b7280" opacity="0.11"/>
+<line x1="62" y1="278.0" x2="660" y2="278.0" class="gl"/><text x="56" y="282.0" class="tick" text-anchor="end">0</text>
+<line x1="62" y1="220.0" x2="660" y2="220.0" class="gl"/><text x="56" y="224.0" class="tick" text-anchor="end">5.5</text>
+<line x1="62" y1="162.0" x2="660" y2="162.0" class="gl"/><text x="56" y="166.0" class="tick" text-anchor="end">11</text>
+<line x1="62" y1="104.0" x2="660" y2="104.0" class="gl"/><text x="56" y="108.0" class="tick" text-anchor="end">16.5</text>
+<line x1="62" y1="46.0" x2="660" y2="46.0" class="gl"/><text x="56" y="50.0" class="tick" text-anchor="end">22</text>
+<text x="62.0" y="294" class="tick" text-anchor="middle">0M</text>
+<text x="181.6" y="294" class="tick" text-anchor="middle">9M</text>
+<text x="301.2" y="294" class="tick" text-anchor="middle">19M</text>
+<text x="420.8" y="294" class="tick" text-anchor="middle">28M</text>
+<text x="540.4" y="294" class="tick" text-anchor="middle">38M</text>
+<text x="660.0" y="294" class="tick" text-anchor="middle">47M</text>
+<text x="371" y="314" class="tick" text-anchor="middle">training steps in this attempt (millions)</text>
+<text transform="translate(14,162) rotate(-90)" class="tick" text-anchor="middle">reward</text>
+<polyline fill="none" stroke="#dc2626" stroke-width="2.5" points="62.0,161.5 352.3,129.9 642.6,121.0"/>
+<circle cx="62.0" cy="161.5" r="3.5" fill="#dc2626"/>
+<circle cx="352.3" cy="129.9" r="3.5" fill="#dc2626"/>
+<circle cx="642.6" cy="121.0" r="3.5" fill="#dc2626"/>
+<circle cx="62.0" cy="134.0" r="3.5" fill="#7c3aed"/>
+<line x1="642.6" y1="121.0" x2="632.6" y2="167.0" class="ann"/><text x="628.6" y="171.0" class="annt" text-anchor="end">attempt 1: score rises, but it learned to REFUSE fast commands</text>
+<line x1="62.0" y1="134.0" x2="76.0" y2="104.0" class="ann"/><text x="80.0" y="108.0" class="annt" text-anchor="start">attempt 2 (fixed scoring): just started</text>
+</svg><p><b>Red, attempt 1:</b> the score went up, which looked like progress, but the dog was getting worse: it learned to stand still whenever asked to go fast. The scoring gave almost no credit for "partly fast", so refusing was the cheapest answer. <b>Purple, attempt 2:</b> scoring fixed so partial speed earns partial credit; it has only just started. This chart is the one to watch next.</p></div>
+<div><h3>Bonus: the stand-up brain</h3><svg viewBox="0 0 680 320" class="chart" role="img" aria-label="Stand-up brain: score per 6-second test (about 20 = perfect)"><text x="62" y="20" class="ct">Stand-up brain: score per 6-second test (about 20 = perfect)</text>
 <rect x="62.0" y="46" width="580.6" height="232" fill="#059669" opacity="0.11"/>
 <line x1="62" y1="278.0" x2="660" y2="278.0" class="gl"/><text x="56" y="282.0" class="tick" text-anchor="end">0</text>
 <line x1="62" y1="220.0" x2="660" y2="220.0" class="gl"/><text x="56" y="224.0" class="tick" text-anchor="end">5</text>
@@ -137,7 +164,7 @@ code{background:var(--card);padding:1px 5px;border-radius:4px;font-size:.9em}
 <text x="420.8" y="294" class="tick" text-anchor="middle">32M</text>
 <text x="540.4" y="294" class="tick" text-anchor="middle">43M</text>
 <text x="660.0" y="294" class="tick" text-anchor="middle">54M</text>
-<text x="371" y="314" class="tick" text-anchor="middle">cumulative training steps (millions)</text>
+<text x="371" y="314" class="tick" text-anchor="middle">training steps (millions)</text>
 <text transform="translate(14,162) rotate(-90)" class="tick" text-anchor="middle">reward</text>
 <polyline fill="none" stroke="#059669" stroke-width="2.5" points="62.0,266.0 207.1,217.7 352.3,162.0 497.4,148.1 642.6,93.3"/>
 <circle cx="62.0" cy="266.0" r="3.5" fill="#059669"/>
@@ -147,63 +174,59 @@ code{background:var(--card);padding:1px 5px;border-radius:4px;font-size:.9em}
 <circle cx="642.6" cy="93.3" r="3.5" fill="#059669"/>
 <line x1="352.3" y1="162.0" x2="364.3" y2="192.0" class="ann"/><text x="368.3" y="196.0" class="annt" text-anchor="start">half-trained: only some starts recover</text>
 <line x1="642.6" y1="93.3" x2="628.6" y2="67.3" class="ann"/><text x="624.6" y="71.3" class="annt" text-anchor="end">20 of 20 stand up within 3 s</text>
-</svg><p>A separate brain, started on its back, side or upside down. Halfway through it could only right itself from some positions. By the end it stands up from all 20 random starts in under 2.2 seconds.</p></div>
-<div><h3>Staying on its feet</h3><svg viewBox="0 0 680 320" class="chart" role="img" aria-label="Average test length (1000 = never fell in 20 s)"><text x="62" y="20" class="ct">Average test length (1000 = never fell in 20 s)</text>
-<rect x="62.0" y="46" width="34.2" height="232" fill="#2563eb" opacity="0.11"/>
-<rect x="96.2" y="46" width="307.4" height="232" fill="#2563eb" opacity="0.06"/>
-<rect x="403.5" y="46" width="136.6" height="232" fill="#d97706" opacity="0.11"/>
-<rect x="540.1" y="46" width="68.3" height="232" fill="#d97706" opacity="0.06"/>
-<rect x="608.4" y="46" width="34.2" height="232" fill="#dc2626" opacity="0.11"/>
-<line x1="62" y1="278.0" x2="660" y2="278.0" class="gl"/><text x="56" y="282.0" class="tick" text-anchor="end">0</text>
-<line x1="62" y1="220.0" x2="660" y2="220.0" class="gl"/><text x="56" y="224.0" class="tick" text-anchor="end">275</text>
-<line x1="62" y1="162.0" x2="660" y2="162.0" class="gl"/><text x="56" y="166.0" class="tick" text-anchor="end">550</text>
-<line x1="62" y1="104.0" x2="660" y2="104.0" class="gl"/><text x="56" y="108.0" class="tick" text-anchor="end">825</text>
-<line x1="62" y1="46.0" x2="660" y2="46.0" class="gl"/><text x="56" y="50.0" class="tick" text-anchor="end">1.1e+03</text>
-<text x="62.0" y="294" class="tick" text-anchor="middle">0M</text>
-<text x="181.6" y="294" class="tick" text-anchor="middle">80M</text>
-<text x="301.2" y="294" class="tick" text-anchor="middle">161M</text>
-<text x="420.8" y="294" class="tick" text-anchor="middle">241M</text>
-<text x="540.4" y="294" class="tick" text-anchor="middle">321M</text>
-<text x="660.0" y="294" class="tick" text-anchor="middle">402M</text>
-<text x="371" y="314" class="tick" text-anchor="middle">cumulative training steps (millions)</text>
-<text transform="translate(14,162) rotate(-90)" class="tick" text-anchor="middle">control steps</text>
-<circle cx="96.2" cy="67.1" r="3.5" fill="#2563eb"/>
-<polyline fill="none" stroke="#2563eb" stroke-width="2.5" points="96.2,67.1 130.3,67.4 164.5,67.1 198.6,68.3 232.8,67.1 266.9,67.3 301.1,71.8 335.2,67.1 369.4,67.1 403.5,68.4"/>
-<circle cx="96.2" cy="67.1" r="3.5" fill="#2563eb"/>
-<circle cx="130.3" cy="67.4" r="3.5" fill="#2563eb"/>
-<circle cx="164.5" cy="67.1" r="3.5" fill="#2563eb"/>
-<circle cx="198.6" cy="68.3" r="3.5" fill="#2563eb"/>
-<circle cx="232.8" cy="67.1" r="3.5" fill="#2563eb"/>
-<circle cx="266.9" cy="67.3" r="3.5" fill="#2563eb"/>
-<circle cx="301.1" cy="71.8" r="3.5" fill="#2563eb"/>
-<circle cx="335.2" cy="67.1" r="3.5" fill="#2563eb"/>
-<circle cx="369.4" cy="67.1" r="3.5" fill="#2563eb"/>
-<circle cx="403.5" cy="68.4" r="3.5" fill="#2563eb"/>
-<polyline fill="none" stroke="#d97706" stroke-width="2.5" points="403.5,95.2 437.7,72.7 471.8,70.7 506.0,73.1 540.1,73.5"/>
-<circle cx="403.5" cy="95.2" r="3.5" fill="#d97706"/>
-<circle cx="437.7" cy="72.7" r="3.5" fill="#d97706"/>
-<circle cx="471.8" cy="70.7" r="3.5" fill="#d97706"/>
-<circle cx="506.0" cy="73.1" r="3.5" fill="#d97706"/>
-<circle cx="540.1" cy="73.5" r="3.5" fill="#d97706"/>
-<polyline fill="none" stroke="#d97706" stroke-width="2.5" points="540.1,69.7 574.3,75.9 608.4,77.8"/>
-<circle cx="540.1" cy="69.7" r="3.5" fill="#d97706"/>
-<circle cx="574.3" cy="75.9" r="3.5" fill="#d97706"/>
-<circle cx="608.4" cy="77.8" r="3.5" fill="#d97706"/>
-<polyline fill="none" stroke="#dc2626" stroke-width="2.5" points="608.4,116.7 642.6,89.0"/>
-<circle cx="608.4" cy="116.7" r="3.5" fill="#dc2626"/>
-<circle cx="642.6" cy="89.0" r="3.5" fill="#dc2626"/>
-</svg><p>Each test ends early if the dog flips over. It reached 1000 (no falls) almost immediately, which is why "stand" was solved long before "walk". It stays near 1000 even with the hardest pushes.</p></div>
+</svg><p>A separate brain that starts on its back, side or upside down. Halfway through it could right itself only from some positions; by the end it stands up from every random start in under 2.2 seconds.</p></div>
 </div>
 
-<h2>How it got here</h2>
-<div class="tlw"><div class="tl"><b>Attempts 1 and 2</b><span class="s">failed</span>The brain turned to NaN after 22M steps. First cause: rare physics blow-ups were never reset. Second cause: fallen dogs sank through the floor because the contact budget was sized for a feet-only robot.</div><div class="tl"><b>Attempt 3</b><span class="s">stalled</span>Healthy but ran the GPU out of memory, then hung so badly that Docker and finally the PC had to be restarted.</div><div class="tl"><b>Rung 1</b><span class="s">206M steps, 2 h 10 min</span>Resumed with memory sized per simulated world. Stood for the first 70M steps, then learned to walk.</div><div class="tl"><b>Rung 2</b><span class="s">161M steps</span>Pushes, falling cubes and randomized mass, friction and motor gains. Passed only after the training pushes were doubled: they had peaked at half of what the test demands.</div><div class="tl"><b>Rung 3</b><span class="s">52M steps, 28 min</span>A second brain trained from random fallen poses. Unity switches between the two automatically.</div></div>
+<h2>Why "run fast" is red: asked vs. reached</h2>
+<div class="row"><div><svg viewBox="0 0 680 320" class="chart" role="img" aria-label="Speed asked for vs. speed actually reached (from a standing start)"><text x="62" y="20" class="ct">Speed asked for vs. speed actually reached (from a standing start)</text>
+<line x1="62" y1="268.0" x2="660" y2="268.0" class="gl"/><text x="56" y="272.0" class="tick" text-anchor="end">0</text>
+<line x1="62" y1="212.5" x2="660" y2="212.5" class="gl"/><text x="56" y="216.5" class="tick" text-anchor="end">0.8</text>
+<line x1="62" y1="157.0" x2="660" y2="157.0" class="gl"/><text x="56" y="161.0" class="tick" text-anchor="end">1.6</text>
+<line x1="62" y1="101.5" x2="660" y2="101.5" class="gl"/><text x="56" y="105.5" class="tick" text-anchor="end">2.4</text>
+<line x1="62" y1="46.0" x2="660" y2="46.0" class="gl"/><text x="56" y="50.0" class="tick" text-anchor="end">3.2</text>
+<line x1="69.0" y1="233.3" x2="154.7" y2="233.3" class="bar"/>
+<rect x="72.0" y="238.9" width="37.9" height="29.1" fill="#2563eb" rx="2"/><text x="90.9" y="234.9" class="tick" text-anchor="middle">0.42</text>
+<rect x="111.8" y="238.2" width="37.9" height="29.8" fill="#dc2626" rx="2"/><text x="130.8" y="234.2" class="tick" text-anchor="middle">0.43</text>
+<text x="111.8" y="284" class="tick" text-anchor="middle">asked 0.5 m/s</text>
+<line x1="168.6" y1="198.6" x2="254.4" y2="198.6" class="bar"/>
+<rect x="171.6" y="204.2" width="37.9" height="63.8" fill="#2563eb" rx="2"/><text x="190.6" y="200.2" class="tick" text-anchor="middle">0.92</text>
+<rect x="211.5" y="203.5" width="37.9" height="64.5" fill="#dc2626" rx="2"/><text x="230.4" y="199.5" class="tick" text-anchor="middle">0.93</text>
+<text x="211.5" y="284" class="tick" text-anchor="middle">asked 1.0 m/s</text>
+<line x1="268.3" y1="163.9" x2="354.0" y2="163.9" class="bar"/>
+<rect x="271.3" y="176.4" width="37.9" height="91.6" fill="#2563eb" rx="2"/><text x="290.2" y="172.4" class="tick" text-anchor="middle">1.32</text>
+<rect x="311.2" y="268.0" width="37.9" height="1.5" fill="#dc2626" rx="2"/><text x="330.1" y="264.0" class="tick" text-anchor="middle">0.00</text>
+<text x="311.2" y="284" class="tick" text-anchor="middle">asked 1.5 m/s</text>
+<line x1="368.0" y1="129.2" x2="453.7" y2="129.2" class="bar"/>
+<rect x="371.0" y="162.6" width="37.9" height="105.4" fill="#2563eb" rx="2"/><text x="389.9" y="158.6" class="tick" text-anchor="middle">1.52</text>
+<rect x="410.8" y="268.0" width="37.9" height="1.5" fill="#dc2626" rx="2"/><text x="429.8" y="264.0" class="tick" text-anchor="middle">0.00</text>
+<text x="410.8" y="284" class="tick" text-anchor="middle">asked 2.0 m/s</text>
+<line x1="467.6" y1="94.6" x2="553.4" y2="94.6" class="bar"/>
+<rect x="470.6" y="268.0" width="37.9" height="1.5" fill="#2563eb" rx="2"/><text x="489.6" y="264.0" class="tick" text-anchor="middle">0.00</text>
+<rect x="510.5" y="268.0" width="37.9" height="1.5" fill="#dc2626" rx="2"/><text x="529.4" y="264.0" class="tick" text-anchor="middle">0.00</text>
+<text x="510.5" y="284" class="tick" text-anchor="middle">asked 2.5 m/s</text>
+<line x1="567.3" y1="59.9" x2="653.0" y2="59.9" class="bar"/>
+<rect x="570.3" y="268.0" width="37.9" height="1.5" fill="#2563eb" rx="2"/><text x="589.2" y="264.0" class="tick" text-anchor="middle">0.00</text>
+<rect x="610.2" y="268.0" width="37.9" height="1.5" fill="#dc2626" rx="2"/><text x="629.1" y="264.0" class="tick" text-anchor="middle">0.00</text>
+<text x="610.2" y="284" class="tick" text-anchor="middle">asked 3.0 m/s</text>
+<rect x="62" y="304" width="11" height="11" fill="#2563eb" rx="2"/><text x="77" y="314" class="tick">brain in the game</text>
+<rect x="192.8" y="304" width="11" height="11" fill="#dc2626" rx="2"/><text x="207.8" y="314" class="tick">run attempt 1 (failed)</text>
+<line x1="355.6" y1="310" x2="373.6" y2="310" class="bar"/><text x="377.6" y="314" class="tick">speed asked for</text>
+<text transform="translate(14,157) rotate(-90)" class="tick" text-anchor="middle">speed reached (m/s)</text></svg></div><div><p>Each group is one speed command from a standstill. The green dashed line is what was asked; the bar is what the dog actually did.</p>
+<ul><li><b>Blue, today's brain:</b> follows commands well up to 1.5, manages 1.5 when asked for 2.0, and <b>stands still</b> when asked for 2.5 or more.</li>
+<li><b>Red, run attempt 1:</b> after more training it stood still at 1.5 as well. That is why it was discarded.</li></ul>
+<p>A bar at zero does not mean the dog fell. It stays upright and braces. In races this is why a dog bumped to a halt used to stay stuck; the race now restarts its speed command gently to get it moving again.</p></div></div>
+
+<h2>How the working brains race</h2>
+<table class="small"><thead><tr><th>Race (Unity, no graphics, repeatable)</th><th>Result</th><th>Notes</th></tr></thead><tbody>
+<tr><td>Sprint, 100 m, 4 dogs</td><td>79.3 / 79.4 / 79.5 / 80.5 s</td><td>267 bumps, 0 respawns</td></tr><tr><td>Oval, 2 laps (195 m), 4 dogs</td><td>150.6 / 150.7 / 153.2 / 155.2 s</td><td>419 bumps, 0 respawns</td></tr><tr><td>Sprint, leader flipped mid-pack, 5 races</td><td>all 20 finishes</td><td>0 respawns; un-stick rule fired twice</td></tr><tr><td>Cost for 4 dogs</td><td>2.0 ms per control step</td><td>budget 5.0 ms</td></tr></tbody></table>
 
 <h2>Honest caveats</h2>
 <div class="banner warn"><ul style="margin:0;padding-left:1.2em">
-<li><b>Top speed from a standstill relies on a command ramp.</b> Hit with an instant jump to 1.3 m/s or more, the brain braces and does not move. The controller therefore ramps the command (reaching 1.5 m/s takes a quarter second), in training tests and in Unity alike.</li>
-<li><b>One parity run drifts.</b> At 0.5 m/s Unity and the simulator agree on speed, step rhythm and motor effort, but their joint angles wander apart by 5 seconds. At 1.5 m/s they stay within 0.00001. The drift is believed to be numerical, not yet proven.</li>
-<li><b>Four-racer cost is an estimate</b> from one racer; no multi-dog scene exists yet.</li>
-<li><b>Not built yet:</b> tracks, the creature and map registries, the pre-race menu, rough terrain, other creatures, Android.</li>
+<li><b>No running yet.</b> Everything in the "Run fast" column is either failing or unproven. Attempt 2 may also fail.</li>
+<li><b>The humanoid is only a body.</b> Its green cell means the physics match between Unity and the simulator with no brain attached. Its training environment and tests are written but have never been run.</li>
+<li><b>Fast starts rely on a helper.</b> The game ramps speed commands over a quarter second and un-sticks stalled racers; without those the current brain freezes on sudden fast commands.</li>
+<li><b>One parity run drifts.</b> At 0.5 m/s the joints of the Unity and simulator runs wander apart by 5 seconds while speed, step rhythm and effort still agree. Not yet explained.</li>
+<li><b>Charts 1 to 3 have few dots</b> in their latest sections because checkpoints are 23 million steps apart.</li>
 </ul></div>
-<p class="muted">Sources: <code>docs/report/tb_final.json</code> (TensorBoard), <code>rl_optimization_log.md</code>. Regenerate with <code>python training/report.py</code>.</p>
+<p class="muted">Sources: <code>docs/report/tb_final.json</code> (TensorBoard scalars), <code>training/speed_probe.py</code>, <code>rl_optimization_log.md</code>. Regenerate with <code>python training/report.py</code>.</p>
 </body></html>
