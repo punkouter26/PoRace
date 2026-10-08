@@ -192,6 +192,11 @@ public unsafe class Go2Controller : MonoBehaviour {
     if (action != null) Array.Copy(action, _lastAction, Nu); else Array.Clear(_lastAction, 0, Nu);
   }
 
+  /// <summary>Drop the slew-limited command to zero so it ramps up again. The policy braces instead of walking when
+  /// it is at rest with a forward command of 1.3 m/s or more (see rl_optimization_log.md); a race uses this to un-stick
+  /// a racer that was bumped to a halt.</summary>
+  public void RestartCommandRamp() { _cmd = Vector3.zero; }
+
   Transform _baseTr;
   /// <summary>Unity transform of this robot's base body (kept in sync by the MuJoCo plugin); for cameras and UI.</summary>
   public Transform BaseTransform { get { if (_baseTr == null) { var go = GameObject.Find(prefix + "base"); if (go != null) _baseTr = go.transform; } return _baseTr; } }

@@ -12,6 +12,7 @@ from mujoco_playground._src import mjx_env
 
 from go2 import constants as C
 from go2.base import Go2Env, Q, V
+from go2.joystick import Joystick
 
 
 def default_config() -> config_dict.ConfigDict:
@@ -23,6 +24,10 @@ def default_config() -> config_dict.ConfigDict:
       reward_config=config_dict.create(scales=config_dict.create(
           orientation=1.0, torso_height=1.0, posture=1.0, stand_still=1.0, action_rate=-0.001,
           dof_pos_limits=-0.1, torques=-1e-5, dof_acc=-2.5e-7, dof_vel=-0.1)),
+      # "Crowd-proof" getup: the same kicks and falling cubes as the locomotion env, while the robot is recovering.
+      # In a race a fallen dog gets walked into by the pack; kicks on the base are the single-robot stand-in for that.
+      pert_config=config_dict.create(enable=False, velocity_kick=[0.0, 5.0], kick_durations=[0.05, 0.2], kick_wait_times=[0.5, 2.0]),
+      cube_config=config_dict.create(enable=False, wait_times=[1.0, 3.0], drop_height=0.8, xy_jitter=0.2),
       impl="warp", naconmax=30 * 8192, njmax=250,
   )
 
@@ -41,6 +46,13 @@ class Getup(Go2Env):
     self._settle_steps = int(self._config.settle_time / self.sim_dt)
     self._z_des = 0.275
     self._up_vec = jp.array([0.0, 0.0, -1.0])
+    self._torso_body_id = self._mj_model.body(C.ROOT_BODY).id
+    self._torso_mass = self._mj_model.body_subtreemass[self._torso_body_id]
+
+  # Disturbances are shared with the locomotion env (same config keys, same info fields).
+  _sample_cube_wait = Joystick._sample_cube_wait
+  _maybe_drop_cube = Joystick._maybe_drop_cube
+  _maybe_apply_perturbation = Joystick._maybe_apply_perturbation
 
   def _get_random_qpos(self, rng: jax.Array) -> jax.Array:
     """Root at 0.5 m with random orientation and joint angles; cubes stay parked."""
@@ -61,7 +73,15 @@ class Getup(Go2Env):
     data = mjx.forward(self.mjx_model, data)
     data = mjx_env.step(self.mjx_model, data, qpos[Q], self._settle_steps)
     data = data.replace(time=0.0)
-    info = {"rng": rng, "last_act": jp.zeros(self.mjx_model.nu), "last_last_act": jp.zeros(self.mjx_model.nu)}
+    rng, p1, p2, p3, p4 = jax.random.split(rng, 5)
+    pc = self._config.pert_config
+    pert_duration_seconds = jax.random.uniform(p2, minval=pc.kick_durations[0], maxval=pc.kick_durations[1])
+    info = {"rng": rng, "last_act": jp.zeros(self.mjx_model.nu), "last_last_act": jp.zeros(self.mjx_model.nu),
+            "steps_until_next_pert": jp.round(jax.random.uniform(p1, minval=pc.kick_wait_times[0], maxval=pc.kick_wait_times[1]) / self.dt).astype(jp.int32),
+            "pert_duration_seconds": pert_duration_seconds, "pert_duration": jp.round(pert_duration_seconds / self.dt).astype(jp.int32),
+            "steps_since_last_pert": 0, "pert_steps": 0, "pert_dir": jp.zeros(3),
+            "pert_mag": jax.random.uniform(p3, minval=pc.velocity_kick[0], maxval=pc.velocity_kick[1]),
+            "steps_until_next_cube": self._sample_cube_wait(p4), "next_cube": 0}
     metrics = {f"reward/{k}": jp.zeros(()) for k in self._config.reward_config.scales.keys()}
     metrics["nan_resets"] = jp.zeros(())
     obs = self._get_obs(data, info)
@@ -69,6 +89,10 @@ class Getup(Go2Env):
     return mjx_env.State(data, obs, reward, done, metrics, info)
 
   def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
+    if self._config.pert_config.enable:
+      state = self._maybe_apply_perturbation(state)
+    if self._config.cube_config.enable:
+      state = self._maybe_drop_cube(state)
     motor_targets = state.data.qpos[Q] + action * self._config.action_scale
     data = mjx_env.step(self.mjx_model, state.data, motor_targets, self.n_substeps)
     obs = self._get_obs(data, state.info)

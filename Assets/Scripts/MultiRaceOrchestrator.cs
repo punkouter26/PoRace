@@ -24,6 +24,7 @@ public class Racer {
   [NonSerialized] public double finishTime = -1;
   [NonSerialized] public RaceState state;
   [NonSerialized] public bool active = true;
+  [NonSerialized] public float stuckFor; [NonSerialized] public int unsticks;
 }
 
 /// <summary>
@@ -93,7 +94,7 @@ public unsafe class MultiRaceOrchestrator : MonoBehaviour {
       var r = _live[i];
       r.lane = lanes[i];
       r.speed = r.cruiseSpeed * (1f - speedSpread * (float)rng.NextDouble());
-      r.distance = 0; r.segment = 0; r.lap = 0; r.checkpoint = 0; r.finishTime = -1; r.place = 0;
+      r.distance = 0; r.segment = 0; r.lap = 0; r.checkpoint = 0; r.finishTime = -1; r.place = 0; r.stuckFor = 0; r.unsticks = 0;
       Spawn(r, 0f);
     }
   }
@@ -155,6 +156,11 @@ public unsafe class MultiRaceOrchestrator : MonoBehaviour {
       var target = map.LanePoint(dist + map.lookAhead, r.lane, out _);
       float err = Mathf.DeltaAngle(yaw * Mathf.Rad2Deg, Mathf.Atan2(target.y - pos.y, target.x - pos.x) * Mathf.Rad2Deg) * Mathf.Deg2Rad;
       c.command = new Vector3(r.speed * Mathf.Max(0.3f, Mathf.Cos(err)), 0f, Mathf.Clamp(steerGain * err, -1.2f, 1.2f));
+      // Un-stick: upright, asked to go fast, but (nearly) stopped for half a second -> restart the command ramp.
+      float vx = (float)d->qvel[M.BaseDof], vy = (float)d->qvel[M.BaseDof + 1];
+      bool stuck = c.Active == Go2Mode.Locomotion && c.FilteredCommand.x > 1.0f && vx * vx + vy * vy < 0.3f * 0.3f;
+      r.stuckFor = stuck ? r.stuckFor + Go2Controller.SimDt : 0f;
+      if (r.stuckFor > 0.5f) { c.RestartCommandRamp(); r.stuckFor = 0f; r.unsticks++; }
       if (Mathf.Abs(lateral) > map.halfWidth + 1f) c.ResetToHome();   // left the track: back to the last checkpoint
     }
     if (Phase == RacePhase.Racing && _finished == _live.Count) Phase = RacePhase.Finished;
@@ -173,7 +179,7 @@ public unsafe class MultiRaceOrchestrator : MonoBehaviour {
       _testDone = true;
       bool ok = Phase == RacePhase.Finished;
       Debug.Log($"[Race4] {(ok ? "FINISHED" : "DNF")} map={map.displayName} laps={Laps} length={_total:F1}m seed={Seed} | " + string.Join(" | ", Standings().Select(r =>
-          $"{r.name} {(r.finishTime >= 0 ? r.finishTime.ToString("F2", CultureInfo.InvariantCulture) + "s" : "DNF@" + r.distance.ToString("F0") + "m")} lane={r.lane:F1} v={r.speed:F2} resets={(r.autoReset != null ? r.autoReset.Resets : 0)}"))
+          $"{r.name} {(r.finishTime >= 0 ? r.finishTime.ToString("F2", CultureInfo.InvariantCulture) + "s" : "DNF@" + r.distance.ToString("F0") + "m")} lane={r.lane:F1} v={r.speed:F2} resets={(r.autoReset != null ? r.autoReset.Resets : 0)} unstuck={r.unsticks}"))
           + $" | flips={_flips} bumps={Bumps} bumpTime={BumpSteps * Go2Controller.SimDt:F2}s");
       double mean = _steps > 0 ? _stepMs / _steps : 0;
       Debug.Log($"[Perf4] {_live.Count} racers: physics step mean {mean:F4} ms max {_maxMs:F3} ms | per 50 Hz control step {mean * Go2Controller.Decimation:F3} ms (budget 5.0)");

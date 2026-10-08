@@ -47,6 +47,10 @@ def make_env(name, pert=False, cubes=False, num_worlds=8192, kick_max=None, vx_m
   # naconmax is a TOTAL across worlds. Size it to the worlds this env instance really runs, otherwise the
   # 128-world eval env allocates the same buffers as the training env and the 12 GB GPU spills or OOMs.
   cfg.naconmax = CONTACTS_PER_ENV * num_worlds
+  if name == "getup":
+    cfg.pert_config.enable = pert
+    cfg.cube_config.enable = cubes
+    if kick_max is not None: cfg.pert_config.velocity_kick = [0.0, float(kick_max)]
   if name == "joystick":
     cfg.pert_config.enable = pert
     cfg.cube_config.enable = cubes

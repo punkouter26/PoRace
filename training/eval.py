@@ -128,6 +128,26 @@ def run(rung, params, seeds):
   return passes >= need
 
 
+def run_crowd_getup(getup_params, seeds):
+  """Getup while being knocked about: fallen start, then a 30 N.s push at 0.6 s and another at 1.6 s.
+  Pass: upright with base above 0.22 m within 5 s and still upright at 7 s. Bar 90 %."""
+  sim = Sim(getup_params, "getup"); passes = 0
+  for seed in range(seeds):
+    rng = np.random.default_rng(seed); sim.reset(rng, fallen=True); t_up = None; steps = 0
+    for k in range(int(7 / C.CTRL_DT)):
+      if k in (int(0.6 / C.CTRL_DT), int(1.6 / C.CTRL_DT)): sim.push(30.0, rng); steps = 25
+      sim.control_step(None)
+      if steps > 0:
+        steps -= C.DECIMATION
+        if steps <= 0: sim.d.xfrc_applied[:] = 0
+      if sim.upright() and sim.d.qpos[2] > 0.22 and t_up is None and k > int(1.8 / C.CTRL_DT): t_up = k * C.CTRL_DT
+    ok = t_up is not None and t_up <= 5.0 and sim.upright() and sim.d.qpos[2] > 0.2
+    print(f"seed {seed}: {'up at %.2fs' % t_up if t_up is not None else 'never up'} {'OK' if ok else 'FAIL'}"); passes += ok
+  need = int(0.9 * seeds)
+  print(f"CROWD-GETUP: {passes}/{seeds} passed (need {need}) -> {'PASS' if passes >= need else 'FAIL'}")
+  return passes >= need
+
+
 def run_combo(loco_params, getup_params, seeds):
   """Walk at 0.5 m/s, get flipped onto a random fallen pose at 2 s, stand up with the getup policy, switch back
   (same rule as Unity: Getup when upvector z < 0, Locomotion after 0.5 s with z > 0.9) and walk again.
@@ -165,11 +185,13 @@ def run_combo(loco_params, getup_params, seeds):
 
 if __name__ == "__main__":
   ap = argparse.ArgumentParser()
-  ap.add_argument("--rung", choices=["r0", "r1", "r2", "r3", "combo"], required=True)
+  ap.add_argument("--rung", choices=["r0", "r1", "r2", "r3", "combo", "crowd"], required=True)
   ap.add_argument("--getup_params")
   ap.add_argument("--params", required=True)
   ap.add_argument("--seeds", type=int, default=10)
   a = ap.parse_args()
+  if a.rung == "crowd":
+    raise SystemExit(0 if run_crowd_getup(brax_model.load_params(a.params), a.seeds) else 1)
   if a.rung == "combo":
     raise SystemExit(0 if run_combo(brax_model.load_params(a.params), brax_model.load_params(a.getup_params), a.seeds) else 1)
   raise SystemExit(0 if run(a.rung, brax_model.load_params(a.params), a.seeds) else 1)
