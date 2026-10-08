@@ -43,8 +43,12 @@ class Sim:
       for _ in range(int(0.5 / C.SIM_DT)):
         mujoco.mj_step(self.m, self.d)
     self.last_act = np.zeros(C.NU, np.float32)
+    self.cmd_f = np.zeros(3, np.float32)
 
   def control_step(self, cmd):
+    if cmd is not None:  # slew-limited command, identical to Unity Go2Controller
+      self.cmd_f = self.cmd_f + np.clip(np.asarray(cmd, np.float32) - self.cmd_f, -C.CMD_SLEW_STEP, C.CMD_SLEW_STEP)
+      cmd = self.cmd_f
     gravity = self.d.site_xmat[self.imu].reshape(3, 3).T @ np.array([0, 0, -1.0])
     if self.env == "joystick":
       obs = np.concatenate([self.sensor(C.LOCAL_LINVEL_SENSOR), self.sensor(C.GYRO_SENSOR), gravity, self.d.qpos[Q] - self.default,
@@ -144,7 +148,7 @@ def run_combo(loco_params, getup_params, seeds):
         mujoco.mj_forward(sim.m, sim.d)
       up = sim.sensor(C.UPVECTOR_SENSOR)[2]
       upright_for = upright_for + C.CTRL_DT if up > 0.9 else 0.0
-      if active == "loco" and up < 0: active = "getup"; sim.last_act[:] = 0
+      if active == "loco" and up < 0: active = "getup"; sim.last_act[:] = 0; sim.cmd_f[:] = 0
       elif active == "getup" and upright_for > 0.5:
         active = "loco"; sim.last_act[:] = 0
         if t > 2 and t_back is None: t_back = t - 2

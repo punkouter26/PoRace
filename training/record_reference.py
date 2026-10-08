@@ -39,12 +39,13 @@ def main():
   adr = {s: m.sensor_adr[m.sensor(s).id] for s in [C.GYRO_SENSOR, C.LOCAL_LINVEL_SENSOR]}
   default = np.array(C.DEFAULT_POSE, np.float32)
   last_act = np.zeros(C.NU, np.float32)
-  cmd = np.array(a.command, np.float32)
+  cmd_target = np.array(a.command, np.float32); cmd = np.zeros(3, np.float32)
   d.ctrl[:] = default
   frames = []
   n_ctrl = int(round(a.seconds / C.CTRL_DT))
   for k in range(n_ctrl):
     gravity = d.site_xmat[imu].reshape(3, 3).T @ np.array([0, 0, -1.0])
+    cmd = cmd + np.clip(cmd_target - cmd, -C.CMD_SLEW_STEP, C.CMD_SLEW_STEP)  # same slew limit as Unity
     if a.env == "joystick":
       obs = np.concatenate([d.sensordata[adr[C.LOCAL_LINVEL_SENSOR]:adr[C.LOCAL_LINVEL_SENSOR] + 3], d.sensordata[adr[C.GYRO_SENSOR]:adr[C.GYRO_SENSOR] + 3],
                             gravity, d.qpos[Q] - default, d.qvel[V], last_act, cmd]).astype(np.float32)

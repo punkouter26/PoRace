@@ -50,3 +50,9 @@ TOTAL_ROBOT_MASS = 6.921 + 4 * (0.678 + 1.152 + 0.241352)
 
 OBS_JOYSTICK = 48  # local_linvel 3, gyro 3, gravity 3, qpos-default 12, qvel 12, last_act 12, command 3
 OBS_GETUP = 42     # gyro 3, gravity 3, qpos-default 12, qvel 12, last_act 12
+
+# Command slew limit applied by every controller (eval, reference recorder, Unity Go2Controller): the commanded
+# (vx, vy, yaw rate) moves toward the requested value by at most this much per second. Without it the policy
+# braces instead of walking when a forward command >= 1.3 m/s arrives at standstill (see rl_optimization_log.md).
+CMD_SLEW = 6.0
+CMD_SLEW_STEP = CMD_SLEW * CTRL_DT

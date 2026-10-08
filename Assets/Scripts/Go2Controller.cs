@@ -23,6 +23,7 @@ public unsafe class Go2Controller : MonoBehaviour {
   public static readonly float[] DefaultPose =
       { 0f, 0.9f, -1.8f, 0f, 0.9f, -1.8f, 0f, 0.9f, -1.8f, 0f, 0.9f, -1.8f };
   public const float HomeHeight = 0.27f;
+  public const float CmdSlewStep = 6.0f * SimDt * Decimation;  // 6 m/s^2 (rad/s^2) per control step = constants.CMD_SLEW_STEP
 
   public Go2Mode mode = Go2Mode.HoldHome;
   public ModelAsset locomotionModel;
@@ -49,6 +50,8 @@ public unsafe class Go2Controller : MonoBehaviour {
     _holdUntil = until;
   }
 
+  Vector3 _cmd;  // slew-limited command actually fed to the policy
+  public Vector3 FilteredCommand => _cmd;
   PolicyRunner _loco, _getup;
   readonly MjActuator[] _act = new MjActuator[Nu];  // MjActuator.OnSyncState rewrites ctrl from .Control after every step
   readonly float[] _obs = new float[ObsJoystick];
@@ -113,6 +116,7 @@ public unsafe class Go2Controller : MonoBehaviour {
     d->qpos[M.BaseQpos + 3] = 1; d->qpos[M.BaseQpos + 4] = 0; d->qpos[M.BaseQpos + 5] = 0; d->qpos[M.BaseQpos + 6] = 0;
     for (int i = 0; i < Nu; i++) { d->qpos[M.JointQpos[i]] = DefaultPose[i]; SetCtrl(d, i, DefaultPose[i]); }
     Array.Clear(_lastAction, 0, Nu);
+    _cmd = Vector3.zero;
     _physicsStep = 0; ControlStep = 0;
     CubePool.Instance?.ParkAll(M, d);
     MujocoLib.mj_forward(m, d);
@@ -135,7 +139,7 @@ public unsafe class Go2Controller : MonoBehaviour {
     // Behaviour switch with hysteresis: fall -> Getup; back to Locomotion only after 0.5 s solidly upright.
     if (mode != _requested) { _requested = mode; Active = mode; }
     if (autoGetup && _getup != null && _loco != null && _requested == Go2Mode.Locomotion) {
-      if (Active == Go2Mode.Locomotion && !Upright) { Active = Go2Mode.Getup; Array.Clear(_lastAction, 0, Nu); }
+      if (Active == Go2Mode.Locomotion && !Upright) { Active = Go2Mode.Getup; Array.Clear(_lastAction, 0, Nu); _cmd = Vector3.zero; }
       else if (Active == Go2Mode.Getup && _uprightSince > 0.5f) { Active = Go2Mode.Locomotion; Array.Clear(_lastAction, 0, Nu); }
     }
     var active = Active;
@@ -144,6 +148,8 @@ public unsafe class Go2Controller : MonoBehaviour {
     var t0 = Time.realtimeSinceStartupAsDouble;
     switch (active) {
       case Go2Mode.Locomotion when _loco != null:
+        _cmd = new Vector3(Mathf.MoveTowards(_cmd.x, command.x, CmdSlewStep), Mathf.MoveTowards(_cmd.y, command.y, CmdSlewStep),
+                           Mathf.MoveTowards(_cmd.z, command.z, CmdSlewStep));
         BuildObs(d, withLinvelAndCommand: true);
         action = _loco.Run(_obs, ObsJoystick);
         for (int i = 0; i < Nu; i++) SetCtrl(d, i, DefaultPose[i] + ActionScale * Mathf.Clamp(action[i], -1f, 1f));
@@ -184,7 +190,7 @@ public unsafe class Go2Controller : MonoBehaviour {
     for (int i = 0; i < Nu; i++) _obs[k++] = (float)(d->qpos[M.JointQpos[i]] - DefaultPose[i]);
     for (int i = 0; i < Nu; i++) _obs[k++] = (float)d->qvel[M.JointDof[i]];
     for (int i = 0; i < Nu; i++) _obs[k++] = _lastAction[i];
-    if (withLinvelAndCommand) { _obs[k++] = command.x; _obs[k++] = command.y; _obs[k++] = command.z; }
+    if (withLinvelAndCommand) { _obs[k++] = _cmd.x; _obs[k++] = _cmd.y; _obs[k++] = _cmd.z; }
   }
 }
 
