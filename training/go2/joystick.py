@@ -28,7 +28,7 @@ def default_config() -> config_dict.ConfigDict:
               dof_pos_limits=-1.0, pose=0.5, termination=-1.0, stand_still=-1.0, torques=-0.0002,
               action_rate=-0.01, energy=-0.001, feet_clearance=-2.0, feet_height=-0.2, feet_slip=-0.1,
               feet_air_time=0.1),
-          tracking_sigma=0.25, max_foot_height=0.1),
+          tracking_sigma=0.25, sigma_speed_scale=False, max_foot_height=0.1),
       pert_config=config_dict.create(enable=False, velocity_kick=[0.0, 3.0], kick_durations=[0.05, 0.2],
                                      kick_wait_times=[1.0, 3.0]),
       cube_config=config_dict.create(enable=False, wait_times=[1.0, 3.0], drop_height=1.0, xy_jitter=0.15),
@@ -200,7 +200,11 @@ class Joystick(Go2Env):
     foot_z = data.site_xpos[self._feet_site_id][..., -1]
     max_h = self._config.reward_config.max_foot_height
     return {
-        "tracking_lin_vel": jp.exp(-jp.sum(jp.square(cmd[:2] - local_vel[:2])) / sig),
+        # Tolerance grows with the commanded speed when sigma_speed_scale is on: sigma * max(1, |cmd_xy|)^2. With a fixed
+        # sigma of 0.25, running at 1.4 m/s on a 3 m/s command scores 4e-5, the same as standing still, so the policy
+        # learns to brace instead of run (the "freeze" above 1.3 m/s). Relative tolerance rewards partial progress.
+        "tracking_lin_vel": jp.exp(-jp.sum(jp.square(cmd[:2] - local_vel[:2])) / (sig * jp.where(
+            self._config.reward_config.sigma_speed_scale, jp.square(jp.maximum(1.0, jp.linalg.norm(cmd[:2]))), 1.0))),
         "tracking_ang_vel": jp.exp(-jp.square(cmd[2] - gyro[2]) / sig),
         "lin_vel_z": jp.square(self.get_global_linvel(data)[2]),
         "ang_vel_xy": jp.sum(jp.square(self.get_global_angvel(data)[:2])),

@@ -62,6 +62,7 @@ def make_env(name, pert=False, cubes=False, num_worlds=8192, kick_max=None, vx_m
     # Racing range: forward up to vx_max, reverse kept at 1 m/s (a fast reverse is never used in a race).
     if vx_max is not None:
       cfg.command_config.a = [float(vx_max), 0.8, 1.2]; cfg.command_config.lo = [-1.0, -0.8, -1.2]
+      cfg.reward_config.sigma_speed_scale = True   # see joystick.py: needed for commands the policy cannot reach yet
   return cls(config=cfg), cfg
 
 

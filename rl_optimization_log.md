@@ -174,3 +174,20 @@ Caveats: walking from standstill at >= 1.3 m/s relies on the 6 m/s^2 command sle
 - **Fix (race side):** `MultiRaceOrchestrator` restarts the command ramp (`Go2Controller.RestartCommandRamp`) when a racer in Locomotion has a filtered command > 1.0 m/s but moves slower than 0.3 m/s for 0.5 s. Five seeded sprint races with the leader flipped at 30 s: 0 respawns, un-stick fired twice. The verified controller/parity path is unchanged.
 - `getup.py` gained optional kicks and falling cubes (`train.py --env getup --pert --cubes`) in case a harder recovery bar is wanted later; not used.
 - Faster dog: `train.py --vx_max 3.0` (forward commands to 3 m/s, reverse 1 m/s) running as `runs/r4` from the final locomotion policy.
+
+## 2026-10-08 Faster dog, attempt 1 FAILED (runs/r4_fixed_sigma_failed): the freeze is a reward artefact
+
+- `--vx_max 3.0` from the final locomotion policy. `speed_probe.py`: at 23M steps the policy still reached 1.37 m/s on a 1.5 command and stood still for 2.0+; at 46M it stood still at 1.5 as well. More training made it refuse more commands, not run faster.
+- Cause: `tracking_lin_vel = exp(-err^2 / 0.25)`. On a 3 m/s command, running at 1.4 scores exp(-10) = 4e-5 and standing scores exp(-36) = 0: no gradient toward running, and standing is cheaper in energy/torque terms. The same arithmetic explains the original standstill freeze at >= 1.3 m/s (standing vs. a slow start are both worth ~0).
+- Fix: `reward_config.sigma_speed_scale` (on with `--vx_max`): sigma * max(1, |cmd_xy|)^2, so a 3 m/s command tolerates ~1.5 m/s of error the way a 1 m/s command tolerates 0.5. Attempt 2 (`runs/r4`) uses it with `--vx_max 2.5`.
+- Operational: closing the Unity editor during training frees ~2.5 GB of GPU memory; with it open the 12 GB card sits at 9-11 GB and intervals take 25+ min instead of 12.
+
+## 2026-10-08 G1 biped: model derivation and zero-brain parity
+
+- Source: mujoco_playground stock G1 (menagerie `unitree_g1` + playground feet-only scene): 29 position actuators (kp 75/20/2), 33.34 kg, 500 Hz, iterations 3, Newton.
+- The Unity plugin has no `<contact><pair>` and no joint `actuatorfrcrange`. `training/g1/make_model.py` rewrites them: foot-floor and foot-foot pairs -> contype/conaffinity 1 on floor + feet (condim 3, friction 0.6); hand-thigh pairs dropped; per-joint force limits -> `forcerange` on the joint's actuator. Verified against the stock model: all masses, inertias, ranges, gains equal; 2 s PD hold differs by 1.25e-8.
+- Trainer model `training/g1/assets/g1_porace.xml` has the visual meshes stripped (every body has an explicit inertial); Unity model `Assets/MuJoCo/g1/g1_unity.xml` keeps them (35 STL, 19.7 MB). 11 STLs had a header starting with "solid", which Unity's importer rejects as ASCII; the header is rewritten on copy.
+- `G1Controller.cs` (103-dim obs incl. gait clock, decimation 10, sensor snapshot before mj_step1, `[G1Check]` readback) + generic `IParitySource` recorder. **G1 zero-brain parity: 9.41e-7 over 1 s** (`training/g1/zero_brain.py`), first run.
+- The trainer image never had the menagerie: the Dockerfile `RUN` line contained a literal `
+` and failed, hidden by `| tail`. Fixed; the image now has 68 models.
+- Ready but untested (need the GPU): `train.py --env g1`, `g1/sim.py eval|record`.
