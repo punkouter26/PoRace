@@ -1,0 +1,127 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PoRace training report</title>
+<style>
+:root{--bg:#fff;--fg:#111827;--muted:#6b7280;--line:#e5e7eb;--pass:#dcfce7;--fail:#fee2e2;--na:#f3f4f6;--pend:#fef3c7;--card:#f9fafb}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0f172a;--fg:#e5e7eb;--muted:#9ca3af;--line:#334155;--pass:#14532d;--fail:#7f1d1d;--na:#1e293b;--pend:#78350f;--card:#1e293b}}
+body{margin:0;padding:16px;font:16px/1.5 system-ui,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--fg);max-width:1100px;margin-inline:auto}
+h1{font-size:1.6rem;margin:.2em 0} h2{font-size:1.2rem;margin-top:2em;border-bottom:1px solid var(--line);padding-bottom:.3em}
+.muted{color:var(--muted)} .banner{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin:12px 0}
+table.grid{border-collapse:collapse;width:100%;font-size:.92rem} .grid th,.grid td{border:1px solid var(--line);padding:8px;vertical-align:top;text-align:left}
+.grid th small{display:block;font-weight:normal;color:var(--muted)} .agent{width:24%} .c{text-align:center}
+.pass{background:var(--pass)} .fail{background:var(--fail)} .na{background:var(--na);color:var(--muted)} .pending{background:var(--pend)} .note{font-size:.85rem}
+.chart{width:100%;max-width:640px;height:auto;background:var(--card);border:1px solid var(--line);border-radius:10px;display:block}
+.ct{font-size:15px;font-weight:600;fill:var(--fg)} .tick{font-size:11px;fill:var(--muted)} .grid{stroke:var(--line);stroke-width:1}
+.ann{stroke:#f59e0b;stroke-width:1.5} .annt{font-size:12px;fill:#b45309;font-weight:600}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start} @media(max-width:800px){.row{grid-template-columns:1fr}}
+.timeline{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px} .tl{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.tl b{display:block} .tl .s{color:var(--muted);font-size:.85rem}
+code{background:var(--na);padding:1px 5px;border-radius:4px;font-size:.9em}
+</style></head><body>
+<h1>PoRace: Go2 training report</h1>
+<div class="muted">Generated 2026-10-07 23:13. One creature so far (Unitree Go2 quadruped), trained in MuJoCo Warp, played back in Unity through the native MuJoCo plugin.</div>
+<div class="banner"><b>Where things stand:</b> the dog can already <b>stand and balance</b> reliably. It is partway through learning to <b>walk and turn on command</b> (Rung 1); that training run is <b>currently stalled</b> at its 23M-step checkpoint and needs a Docker restart to continue. Push recovery (Rung 2) and standing up after a fall (Rung 3) have not been trained yet. The Unity side is verified to reproduce the simulator exactly on everything trained so far.</div>
+
+<h2>Agents and what they can do</h2>
+<p class="muted">Each cell is a pass/fail against the contract's numeric bar, measured on CPU MuJoCo with 5 seeds (full gates use 10). The right-most column is whether the same policy has been verified inside Unity.</p>
+<table class="grid"><thead><tr><th>Agent / policy</th><th>R0 Stand<br><small>Stay upright 10 s with no command, 10 of 10 seeds</small></th><th>R1 Walk + turn<br><small>Follow speed/turn commands, mean error under 0.2 m/s, 10 of 10 seeds</small></th><th>R2 Recovery<br><small>Survive a 30 N·s push and a 1 kg falling cube, 9 of 10 seeds</small></th><th>R3 Stand-up<br><small>Rise from a fallen pose within 3 s, 9 of 10 seeds (separate getup policy)</small></th><th>Sim-to-Unity parity</th></tr></thead><tbody><tr><th class="agent">Go2 'sanity' policy<br><small>Throwaway 14.7M-step pipeline test. Proves train, export, Unity replay and closed-loop parity.</small></th><td class="c pass"><b>PASS</b><br><small>5/5 passed (need 5) -> PASS</small></td><td class="c fail"><b>FAIL</b><br><small>0/5 passed (need 5) -> FAIL</small></td><td class="c fail"><b>FAIL</b><br><small>3/5 passed (need 4) -> FAIL</small></td><td class="c na">not trained yet</td><td class="c note">parity: zero-brain 4.8e-8, replay 3.6e-7, closed-loop PASS</td></tr><tr><th class="agent">Go2 Rung 1, checkpoint 23M<br><small>First healthy checkpoint of the real Rung 1 run (no pushes, no randomization yet).</small></th><td class="c pass"><b>PASS</b><br><small>5/5 passed (need 5) -> PASS</small></td><td class="c fail"><b>FAIL</b><br><small>0/5 passed (need 5) -> FAIL</small></td><td class="c fail"><b>FAIL</b><br><small>1/5 passed (need 4) -> FAIL</small></td><td class="c na">not trained yet</td><td class="c note">not yet gated in Unity</td></tr><tr><th class="agent">Go2 Rung 1, continuation (stalled)<br><small>Resume from the 23M checkpoint toward 200M steps. Currently NOT progressing: the training container hung and has to be restarted.</small></th><td class="c pending">no result yet</td><td class="c pending">no result yet</td><td class="c pending">no result yet</td><td class="c pending">no result yet</td><td class="c note">gate runs on completion</td></tr></tbody></table>
+
+<h2>The three charts that matter right now</h2>
+<p class="muted">Drawn from the TensorBoard logs of the Rung 1 run (<code>runs/r1</code>). Each point is a test of 128 simulated dogs with the current brain, every 20 million training steps. Purple ring = the throwaway sanity run, for scale.</p>
+<div class="row">
+<div><h3>1. Overall score per episode</h3><svg viewBox="0 0 640 300" class="chart" role="img" aria-label="Reward per 20-second episode (higher is better)">
+<text x="60" y="22" class="ct">Reward per 20-second episode (higher is better)</text>
+<line x1="60" y1="260.0" x2="620" y2="260.0" class="grid"/><text x="54" y="264.0" class="tick" text-anchor="end">0</text>
+<line x1="60" y1="205.0" x2="620" y2="205.0" class="grid"/><text x="54" y="209.0" class="tick" text-anchor="end">4.95</text>
+<line x1="60" y1="150.0" x2="620" y2="150.0" class="grid"/><text x="54" y="154.0" class="tick" text-anchor="end">9.9</text>
+<line x1="60" y1="95.0" x2="620" y2="95.0" class="grid"/><text x="54" y="99.0" class="tick" text-anchor="end">14.9</text>
+<line x1="60" y1="40.0" x2="620" y2="40.0" class="grid"/><text x="54" y="44.0" class="tick" text-anchor="end">19.8</text>
+<text x="60.0" y="276" class="tick" text-anchor="middle">0M</text>
+<text x="200.0" y="276" class="tick" text-anchor="middle">6M</text>
+<text x="340.0" y="276" class="tick" text-anchor="middle">12M</text>
+<text x="480.0" y="276" class="tick" text-anchor="middle">18M</text>
+<text x="620.0" y="276" class="tick" text-anchor="middle">24M</text>
+<text x="350" y="294" class="tick" text-anchor="middle">training steps (millions of simulated control steps)</text>
+<text transform="translate(14,150) rotate(-90)" class="tick" text-anchor="middle">reward</text>
+<polyline fill="none" stroke="#2563eb" stroke-width="2.5" points="60.0,259.3 593.3,69.8 593.3,68.7"/>
+<circle cx="60.0" cy="259.3" r="4" fill="#2563eb"/>
+<circle cx="593.3" cy="69.8" r="4" fill="#2563eb"/>
+<circle cx="593.3" cy="68.7" r="4" fill="#2563eb"/>
+<circle cx="402.9" cy="79.9" r="5" fill="none" stroke="#9333ea" stroke-width="2"/>
+<line x1="60.0" y1="259.3" x2="78.0" y2="199.3" class="ann"/><text x="82.0" y="203.3" class="annt">start: random brain, falls almost immediately</text>
+<line x1="593.3" y1="68.7" x2="611.3" y2="98.7" class="ann"/><text x="615.3" y="102.7" class="annt">latest checkpoint: 17.2</text>
+<line x1="402.9" y1="79.9" x2="420.9" y2="129.9" class="ann"/><text x="424.9" y="133.9" class="annt">throwaway 'sanity' run for comparison (16.2)</text>
+</svg><p>Think of this as the dog's report-card grade for one 20-second test. It earns points every tick for moving at the commanded speed, turning at the commanded rate and keeping its body level, and loses points for shaking, wasting energy, dragging feet or falling. A random brain scores about 0. The first real checkpoint already scores 17, which is the level the earlier throwaway run reached after a similar amount of training.</p></div><div><h3>2. How long it stays on its feet</h3><svg viewBox="0 0 640 300" class="chart" role="img" aria-label="Average episode length (1000 = never fell in 20 s)">
+<text x="60" y="22" class="ct">Average episode length (1000 = never fell in 20 s)</text>
+<line x1="60" y1="260.0" x2="620" y2="260.0" class="grid"/><text x="54" y="264.0" class="tick" text-anchor="end">0</text>
+<line x1="60" y1="205.0" x2="620" y2="205.0" class="grid"/><text x="54" y="209.0" class="tick" text-anchor="end">288</text>
+<line x1="60" y1="150.0" x2="620" y2="150.0" class="grid"/><text x="54" y="154.0" class="tick" text-anchor="end">575</text>
+<line x1="60" y1="95.0" x2="620" y2="95.0" class="grid"/><text x="54" y="99.0" class="tick" text-anchor="end">862</text>
+<line x1="60" y1="40.0" x2="620" y2="40.0" class="grid"/><text x="54" y="44.0" class="tick" text-anchor="end">1.15e+03</text>
+<text x="60.0" y="276" class="tick" text-anchor="middle">0M</text>
+<text x="200.0" y="276" class="tick" text-anchor="middle">6M</text>
+<text x="340.0" y="276" class="tick" text-anchor="middle">12M</text>
+<text x="480.0" y="276" class="tick" text-anchor="middle">18M</text>
+<text x="620.0" y="276" class="tick" text-anchor="middle">24M</text>
+<text x="350" y="294" class="tick" text-anchor="middle">training steps (millions of simulated control steps)</text>
+<text transform="translate(14,150) rotate(-90)" class="tick" text-anchor="middle">control steps</text>
+<polyline fill="none" stroke="#2563eb" stroke-width="2.5" points="60.0,190.0 593.3,68.7 593.3,68.7"/>
+<circle cx="60.0" cy="190.0" r="4" fill="#2563eb"/>
+<circle cx="593.3" cy="68.7" r="4" fill="#2563eb"/>
+<circle cx="593.3" cy="68.7" r="4" fill="#2563eb"/>
+<line x1="60.0" y1="190.0" x2="78.0" y2="140.0" class="ann"/><text x="82.0" y="144.0" class="annt">falls after ~7 s on average</text>
+<line x1="593.3" y1="68.7" x2="611.3" y2="98.7" class="ann"/><text x="615.3" y="102.7" class="annt">1000 = no falls in any test episode</text>
+</svg><p>Each test lasts at most 1000 control steps (20 seconds) and ends early if the dog flips over. 1000 means it never fell in any of the test runs. Standing and balance (Rung 0) are therefore already solved by the first checkpoint; what remains is walking quality.</p></div><div><h3>3. How well it follows the speed command</h3><svg viewBox="0 0 640 300" class="chart" role="img" aria-label="Speed-tracking points per episode (max about 1000)">
+<text x="60" y="22" class="ct">Speed-tracking points per episode (max about 1000)</text>
+<line x1="60" y1="260.0" x2="620" y2="260.0" class="grid"/><text x="54" y="264.0" class="tick" text-anchor="end">0</text>
+<line x1="60" y1="205.0" x2="620" y2="205.0" class="grid"/><text x="54" y="209.0" class="tick" text-anchor="end">79.7</text>
+<line x1="60" y1="150.0" x2="620" y2="150.0" class="grid"/><text x="54" y="154.0" class="tick" text-anchor="end">159</text>
+<line x1="60" y1="95.0" x2="620" y2="95.0" class="grid"/><text x="54" y="99.0" class="tick" text-anchor="end">239</text>
+<line x1="60" y1="40.0" x2="620" y2="40.0" class="grid"/><text x="54" y="44.0" class="tick" text-anchor="end">319</text>
+<text x="60.0" y="276" class="tick" text-anchor="middle">0M</text>
+<text x="200.0" y="276" class="tick" text-anchor="middle">6M</text>
+<text x="340.0" y="276" class="tick" text-anchor="middle">12M</text>
+<text x="480.0" y="276" class="tick" text-anchor="middle">18M</text>
+<text x="620.0" y="276" class="tick" text-anchor="middle">24M</text>
+<text x="350" y="294" class="tick" text-anchor="middle">training steps (millions of simulated control steps)</text>
+<text transform="translate(14,150) rotate(-90)" class="tick" text-anchor="middle">tracking points</text>
+<polyline fill="none" stroke="#059669" stroke-width="2.5" points="60.0,204.4 593.3,75.7 593.3,68.7"/>
+<circle cx="60.0" cy="204.4" r="4" fill="#059669"/>
+<circle cx="593.3" cy="75.7" r="4" fill="#059669"/>
+<circle cx="593.3" cy="68.7" r="4" fill="#059669"/>
+<line x1="593.3" y1="68.7" x2="611.3" y2="98.7" class="ann"/><text x="615.3" y="102.7" class="annt">about a quarter of the maximum so far</text>
+</svg><p>The dog is given a joystick-style command (walk forward at up to 1.5 m/s, sideways, or turn). This curve counts how close its actual speed is to the command, every tick, summed over the episode; a perfect follower would score about 1000. It is at roughly a quarter of that: it balances well but does not yet reach the commanded speeds. This is the curve to watch for Rung 1 (walk and turn).</p></div>
+<div><h3>Health check: NaN resets</h3><svg viewBox="0 0 640 300" class="chart" role="img" aria-label="Simulated dogs reset because the physics blew up (must stay 0)">
+<text x="60" y="22" class="ct">Simulated dogs reset because the physics blew up (must stay 0)</text>
+<line x1="60" y1="260.0" x2="620" y2="260.0" class="grid"/><text x="54" y="264.0" class="tick" text-anchor="end">0</text>
+<line x1="60" y1="205.0" x2="620" y2="205.0" class="grid"/><text x="54" y="209.0" class="tick" text-anchor="end">0.287</text>
+<line x1="60" y1="150.0" x2="620" y2="150.0" class="grid"/><text x="54" y="154.0" class="tick" text-anchor="end">0.575</text>
+<line x1="60" y1="95.0" x2="620" y2="95.0" class="grid"/><text x="54" y="99.0" class="tick" text-anchor="end">0.862</text>
+<line x1="60" y1="40.0" x2="620" y2="40.0" class="grid"/><text x="54" y="44.0" class="tick" text-anchor="end">1.15</text>
+<text x="60.0" y="276" class="tick" text-anchor="middle">0M</text>
+<text x="200.0" y="276" class="tick" text-anchor="middle">6M</text>
+<text x="340.0" y="276" class="tick" text-anchor="middle">12M</text>
+<text x="480.0" y="276" class="tick" text-anchor="middle">18M</text>
+<text x="620.0" y="276" class="tick" text-anchor="middle">24M</text>
+<text x="350" y="294" class="tick" text-anchor="middle">training steps (millions of simulated control steps)</text>
+<text transform="translate(14,150) rotate(-90)" class="tick" text-anchor="middle">resets per episode</text>
+<polyline fill="none" stroke="#dc2626" stroke-width="2.5" points="60.0,260.0 593.3,260.0 593.3,260.0"/>
+<circle cx="60.0" cy="260.0" r="4" fill="#dc2626"/>
+<circle cx="593.3" cy="260.0" r="4" fill="#dc2626"/>
+<circle cx="593.3" cy="260.0" r="4" fill="#dc2626"/>
+<line x1="593.3" y1="260.0" x2="611.3" y2="230.0" class="ann"/><text x="615.3" y="234.0" class="annt">0 = healthy</text>
+</svg><p>Not a skill, but the number that killed the first two attempts. Any value above zero means a simulated dog's physics exploded or it fell through the floor; the trainer now catches these and resets that dog, and this counter shows how often. Zero so far in the current attempt.</p></div>
+</div>
+
+<h2>How the Rung 1 run has gone</h2>
+<div class="timeline">
+<div class="tl"><b>Attempt 1</b><span class="s">failed at 22M</span>Brain went NaN. One in a few thousand simulated dogs hit a solver blow-up, the fall check could not see NaN, and the bad numbers poisoned the shared observation statistics.</div><div class="tl"><b>Attempt 2</b><span class="s">failed at 22M</span>Guard added for NaN, but fallen dogs were sinking through the floor: the contact budget was sized for a feet-only robot and dropped contacts once many dogs were on the ground.</div><div class="tl"><b>Attempt 3</b><span class="s">healthy, then out of GPU memory at 23M</span>Bigger contact budget worked (reward 17.1, no falls, 0 NaN resets) but the GPU ran out of memory.</div><div class="tl"><b>Attempt 3c</b><span class="s">stalled</span>Resumed from the 23M checkpoint with a smaller contact budget and a cap on JAX's memory share. GPU stayed at 100 % for over an hour with no eval logged; the container could not be stopped (zombie process) and now blocks new GPU containers until Docker is restarted.</div>
+</div>
+
+<h2>What happens next</h2>
+<ol>
+<li>Restart Docker to clear the stuck container, resume from the 23M checkpoint, and let the run finish (about 200M more steps). The gate script exports the brain to ONNX, re-runs the R0 and R1 bars with 10 seeds, records a 5-second reference run, rebuilds the Unity player and checks it reproduces the policy outputs (under 1e-4) and the gait (speed, cadence, torque within tolerance).</li>
+<li>On a pass: tag <code>rung1-parity-pass</code>, then Rung 2 continues from this brain with random pushes, falling cubes and physics randomization.</li>
+<li>Rung 3 trains a second, separate "get up" brain from fallen poses; Unity switches between the two automatically.</li>
+</ol>
+<p class="muted">Sources: <code>docs/report/tb_scalars.json</code>, <code>docs/report/eval_results.json</code>, <code>rl_optimization_log.md</code>. Regenerate with <code>python training/report.py</code>.</p>
+</body></html>

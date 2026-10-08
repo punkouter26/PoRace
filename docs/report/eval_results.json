@@ -1,0 +1,72 @@
+{
+ "sanity": {
+  "r0": {
+   "pass": true,
+   "summary": "R0: 5/5 passed (need 5) -> PASS",
+   "details": [
+    "seed 0: upright z=0.307",
+    "seed 1: upright z=0.307",
+    "seed 2: upright z=0.307",
+    "seed 3: upright z=0.307",
+    "seed 4: upright z=0.307"
+   ]
+  },
+  "r1": {
+   "pass": false,
+   "summary": "R1: 0/5 passed (need 5) -> FAIL",
+   "details": [
+    "seed 0: mean vel err 0.807 FAIL",
+    "seed 1: mean vel err 0.807 FAIL",
+    "seed 2: mean vel err 0.807 FAIL",
+    "seed 3: mean vel err 0.807 FAIL",
+    "seed 4: mean vel err 0.807 FAIL"
+   ]
+  },
+  "r2": {
+   "pass": false,
+   "summary": "R2: 3/5 passed (need 4) -> FAIL",
+   "details": [
+    "seed 0: FELL",
+    "seed 1: survived",
+    "seed 2: FELL",
+    "seed 3: survived",
+    "seed 4: survived"
+   ]
+  }
+ },
+ "r1_23M": {
+  "r0": {
+   "pass": true,
+   "summary": "R0: 5/5 passed (need 5) -> PASS",
+   "details": [
+    "seed 0: upright z=0.226",
+    "seed 1: upright z=0.226",
+    "seed 2: upright z=0.226",
+    "seed 3: upright z=0.226",
+    "seed 4: upright z=0.226"
+   ]
+  },
+  "r1": {
+   "pass": false,
+   "summary": "R1: 0/5 passed (need 5) -> FAIL",
+   "details": [
+    "seed 0: mean vel err 0.785 FAIL",
+    "seed 1: mean vel err 0.785 FAIL",
+    "seed 2: mean vel err 0.785 FAIL",
+    "seed 3: mean vel err 0.785 FAIL",
+    "seed 4: mean vel err 0.785 FAIL"
+   ]
+  },
+  "r2": {
+   "pass": false,
+   "summary": "R2: 1/5 passed (need 4) -> FAIL",
+   "details": [
+    "seed 0: FELL",
+    "seed 1: survived",
+    "seed 2: FELL",
+    "seed 3: FELL",
+    "seed 4: FELL"
+   ]
+  }
+ }
+}
